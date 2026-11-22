@@ -1,0 +1,210 @@
+{
+ "ar_baggage": {
+  "p": [
+   -1316.0,
+   1288.0,
+   2.539062
+  ],
+  "up": "assets/radars/ar_baggage.webp",
+  "low": "assets/radars/ar_baggage_lower.webp",
+  "th": -5
+ },
+ "ar_shoots": {
+  "p": [
+   -1368.0,
+   1952.0,
+   2.6875
+  ],
+  "up": "assets/radars/ar_shoots.webp"
+ },
+ "ar_shoots_night": {
+  "p": [
+   -1368.0,
+   1952.0,
+   2.6875
+  ],
+  "up": "assets/radars/ar_shoots_night.webp"
+ },
+ "cs_italy": {
+  "p": [
+   -2647.0,
+   2592.0,
+   4.6
+  ],
+  "up": "assets/radars/cs_italy.webp"
+ },
+ "cs_office": {
+  "p": [
+   -1838.0,
+   1858.0,
+   4.1
+  ],
+  "up": "assets/radars/cs_office.webp"
+ },
+ "cs_shelter": {
+  "p": [
+   -3448.7712,
+   3805.3228,
+   3.311857
+  ],
+  "up": "assets/radars/cs_shelter.webp"
+ },
+ "de_ancient": {
+  "p": [
+   -2953.0,
+   2164.0,
+   5.0
+  ],
+  "up": "assets/radars/de_ancient.webp"
+ },
+ "de_ancient_night": {
+  "p": [
+   -2953.0,
+   2164.0,
+   5.0
+  ],
+  "up": "assets/radars/de_ancient_night.webp"
+ },
+ "de_anubis": {
+  "p": [
+   -2796.0,
+   3328.0,
+   5.22
+  ],
+  "up": "assets/radars/de_anubis.webp"
+ },
+ "de_boulder": {
+  "p": [
+   -3273.4917,
+   2930.2207,
+   2.8491137
+  ],
+  "up": "assets/radars/de_boulder.webp"
+ },
+ "de_cache": {
+  "p": [
+   -2000.0,
+   3250.0,
+   5.5
+  ],
+  "up": "assets/radars/de_cache.webp"
+ },
+ "de_cbble": {
+  "p": [
+   -3615.0,
+   2712.0,
+   4.724792
+  ],
+  "up": "assets/radars/de_cbble.webp"
+ },
+ "de_debris": {
+  "p": [
+   -3015.2393,
+   2919.2393,
+   1.9445695
+  ],
+  "up": "assets/radars/de_debris.webp"
+ },
+ "de_dust": {
+  "p": [
+   -2850.0,
+   4073.0,
+   6.0
+  ],
+  "up": "assets/radars/de_dust.webp"
+ },
+ "de_dust2": {
+  "p": [
+   -2476.0,
+   3239.0,
+   4.4
+  ],
+  "up": "assets/radars/de_dust2.webp"
+ },
+ "de_eldorado": {
+  "p": [
+   -3548.6814,
+   2571.1816,
+   2.0656068
+  ],
+  "up": "assets/radars/de_eldorado.webp"
+ },
+ "de_fachwerk": {
+  "p": [
+   -2311.0767,
+   2874.6204,
+   2.5537856
+  ],
+  "up": "assets/radars/de_fachwerk.webp"
+ },
+ "de_inferno": {
+  "p": [
+   -2087.0,
+   3870.0,
+   4.9
+  ],
+  "up": "assets/radars/de_inferno.webp"
+ },
+ "de_mirage": {
+  "p": [
+   -3230.0,
+   1713.0,
+   5.0
+  ],
+  "up": "assets/radars/de_mirage.webp"
+ },
+ "de_nuke": {
+  "p": [
+   -3453.0,
+   2887.0,
+   7.0
+  ],
+  "up": "assets/radars/de_nuke.webp",
+  "low": "assets/radars/de_nuke_lower.webp",
+  "th": -495
+ },
+ "de_overpass": {
+  "p": [
+   -4831.0,
+   1781.0,
+   5.2
+  ],
+  "up": "assets/radars/de_overpass.webp"
+ },
+ "de_poseidon": {
+  "p": [
+   -1046.3943,
+   1166.3942,
+   3.0124886
+  ],
+  "up": "assets/radars/de_poseidon.webp"
+ },
+ "de_train": {
+  "p": [
+   -2308.0,
+   2078.0,
+   4.082077
+  ],
+  "up": "assets/radars/de_train.webp",
+  "low": "assets/radars/de_train_lower.webp",
+  "th": -50
+ },
+ "de_vertigo": {
+  "p": [
+   -3168.0,
+   1762.0,
+   4.0
+  ],
+  "up": "assets/radars/de_vertigo.webp",
+  "low": "assets/radars/de_vertigo_lower.webp",
+  "th": 11700
+ },
+ "rush_001": {
+  "p": [
+   1744.0,
+   7836.0,
+   2.484375
+  ],
+  "up": "assets/radars/rush_001.webp"
+ }
+}
