@@ -13,10 +13,16 @@ Plataforma pessoal de análise, revisão e treino de videojogos. Corre 100% no n
   - timeline **só da ronda atual**, com as kills marcadas (cor da equipa);
   - seletor de rondas (◀ lista ▶) por baixo do placar;
   - velocidades 0.25× a 4× e saltos de ±5 s / ±15 s;
+  - **cartas dos jogadores** com arma (principal ou pistola), dinheiro, colete/capacete, kit de defusa, bomba e utilidades (☁ smoke, ⚡ flash, 🔥 molotov/incendiária, 💥 HE);
+  - **relógio da ronda** em contagem decrescente: compras (buytime) → 1:55 → bomba 0:40. A opção **Buytime** (ao lado do seletor de rondas) liga/desliga o tempo de compras na ronda e na timeline, e fica guardada no navegador;
+  - **utilidades no mapa**: por baixo da equipa da direita, botões Smoke / Molo / Flash / HE para colocar no radar (a smoke e o molotov mostram o raio aproximado);
+  - **cor livre** nos desenhos e nas notas (seletor de cor ao lado das 5 cores);
+  - **notas ao vivo**: aparecem no canto superior direito durante 10 s a partir do instante em que foram escritas, com a cor escolhida.
   - piso superior/inferior (Nuke, Train, Vertigo…);
   - **desenhos** sobre o radar: livre, linha, seta, círculo, texto e borracha, em 5 cores, ligados ao instante da partida (visíveis 5 s / 10 s / 30 s ou a ronda toda), com desfazer e limpar ronda;
   - **notas** por instante (painel 📝 Notas): clicar numa nota salta para esse momento; aparecem como losangos amarelos na timeline da ronda;
   - desenhos e notas ficam guardados no navegador, por projeto (registo `<id>:anno` no IndexedDB), sem reescrever o ficheiro da demo.
+- **Quadro tático (só o mapa)**: num projeto vazio do CS2, "Usar só o mapa" abre o radar do mapa escolhido (25 mapas, com piso inferior) para desenhar estratégias e escrever notas, sem precisar de demo. Cada mapa guarda os seus próprios desenhos e notas.
 - **Quadro tático (só o mapa)**: num projeto vazio do CS2, "Usar só o mapa" abre o radar do mapa escolhido (25 mapas, com piso inferior) para desenhar estratégias e escrever notas, sem precisar de demo. Cada mapa guarda os seus próprios desenhos e notas.
 - Radares incluídos para 25 mapas (ver `assets/radars/radars.json`).
 
