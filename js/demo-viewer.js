@@ -13,6 +13,10 @@ async function demoParse(blob,say){
  const h=_norm(DPM.parseHeader(b))||{};
  const ev=async n=>{say('A ler eventos ('+n+')…');await _nx();try{return _rows(DPM.parseEvent(b,n))}catch(e){return []}};
  const deaths=await ev('player_death'),starts=await ev('round_start'),ends=await ev('round_end'),fes=await ev('round_freeze_end'),plants=await ev('bomb_planted');
+ const sm=await ev('smokegrenade_detonate'),sx=await ev('smokegrenade_expired'),ib=await ev('inferno_startburn'),ie=await ev('inferno_expire'),fl=await ev('flashbang_detonate'),he=await ev('hegrenade_detonate');
+ const pair=(a,b,k,def)=>a.map(e=>{const o=b.find(x=>x.entityid===e.entityid&&+x.tick>=+e.tick);return{k,t:+e.tick,e:o?+o.tick:+e.tick+def,x:+e.x,y:+e.y,z:+e.z,s:e.user_steamid,n:e.user_name}});
+ const one=(a,k,def)=>a.map(e=>({k,t:+e.tick,e:+e.tick+def,x:+e.x,y:+e.y,z:+e.z,s:e.user_steamid,n:e.user_name}));
+ const util=[...pair(sm,sx,'smoke',1152),...pair(ib,ie,'molotov',448),...one(fl,'flash',96),...one(he,'he',64)].filter(u=>isFinite(u.x)&&isFinite(u.y));
  const lastEv=[...deaths,...ends].reduce((m,e)=>Math.max(m,+e.tick||0),0);
  const maxT=+h.playback_ticks||lastEv+640,step=16;
  const ticks=new Int32Array(Math.ceil(maxT/step)+1).map((_,i)=>i*step);
@@ -22,14 +26,14 @@ async function demoParse(blob,say){
  const fr=new Map();
  for(const r of rows){if(r.X==null)continue;let f=fr.get(r.tick);if(!f)fr.set(r.tick,f=[]);f.push(r)}
  if(!fr.size)throw new Error('Sem dados de posição na demo (formato inesperado).');
- return{map:h.map_name||'',T:[...fr.keys()].sort((a,b)=>a-b),fr,deaths,starts:starts.map(e=>+e.tick).sort((a,b)=>a-b),ends:ends.map(e=>({tick:+e.tick,w:String(e.winner||'')})),fe:fes.map(e=>+e.tick).sort((a,b)=>a-b),plants:plants.map(e=>+e.tick).sort((a,b)=>a-b)};
+ return{map:h.map_name||'',T:[...fr.keys()].sort((a,b)=>a-b),fr,deaths,starts:starts.map(e=>+e.tick).sort((a,b)=>a-b),ends:ends.map(e=>({tick:+e.tick,w:String(e.winner||'')})),fe:fes.map(e=>+e.tick).sort((a,b)=>a-b),plants:plants.map(e=>+e.tick).sort((a,b)=>a-b),util};
 }
 function demoView(p,el){
  el.innerHTML='<div class="note" id="ds">A preparar…</div>';
  loadRadars().then(()=>demoParse(p.blob,m=>{const s=document.getElementById('ds');if(s)s.textContent=m})).then(D=>demoPlay(D,el,p)).catch(e=>{el.innerHTML='<div class="note"><b>Não foi possível ler a demo.</b><br>'+esc(e&&e.message||e)+'</div>'});
 }
 function demoPlay(D,el,p){
- $.style.maxWidth='1600px';
+ $.classList.add('wide');
  const R=RADAR[D.map],S=1024,N=D.T.length,th=R&&R.th!=null?R.th:null;
  const xs=[],ys=[];for(const f of D.fr.values())for(const r of f){xs.push(r.X);ys.push(r.Y)}
  const mn=a=>a.reduce((m,v)=>v<m?v:m,Infinity),mx=a=>a.reduce((m,v)=>v>m?v:m,-Infinity);
@@ -42,7 +46,7 @@ function demoPlay(D,el,p){
  const col=t=>t==2?'#f08c00':'#4dabf7';
  const idxOf=t=>{let k=D.T.findIndex(x=>x>=t);return k<0?N-1:Math.max(0,k)};
  const rend=k=>rounds[k+1]||t1;
- const fes=D.fe||[],plants=D.plants||[];let buy=true;try{buy=localStorage.getItem('ugr_buy')!=='0'}catch(e){}
+ const fes=D.fe||[],plants=D.plants||[];let buy=true,showU=true;try{buy=localStorage.getItem('ugr_buy')!=='0';showU=localStorage.getItem('ugr_util')!=='0'}catch(e){}
  const feOf=k=>{const x=fes.find(q=>q>=rounds[k]&&q<rend(k));return x??rounds[k]+960};
  const st=k=>buy?rounds[k]:feOf(k);let curFe=0,curPl=0;
  const GR={'Smoke Grenade':'☁','Flashbang':'⚡','High Explosive Grenade':'💥','Molotov':'🔥','Incendiary Grenade':'🔥','Decoy Grenade':'◎'};
@@ -50,11 +54,11 @@ function demoPlay(D,el,p){
  function gear(r){const inv=Array.isArray(r.inventory)?r.inventory:[];let w='',pis='',u='',c4=false;for(const n of inv){if(GR[n])u+=GR[n];else if(n==='C4 Explosive')c4=true;else if(PIS.includes(n))pis=n;else if(!/^knife|^Zeus|taser/i.test(n))w=n}return{w:w||pis||'—',u,c4}}
  const win=k=>{const e=D.ends.find(e=>e.tick>=rounds[k]&&e.tick<rend(k));return e?e.w:''};
  el.innerHTML=`<div class="stg${D.board?' board':''}"><canvas id="cv" width="${S}" height="${S}"></canvas>
- <div class="tw"><div class="tc"><div class="tm side3">CT <b id="sc3">0</b></div><div class="mid"><b id="tm">0:00</b><span id="rn"></span></div><div class="tm side2"><b id="sc2">0</b> T</div></div>
+ <div class="tw"><div class="tc"><div class="tm side2">T <b id="sc2">0</b></div><div class="mid"><b id="tm">0:00</b><span id="rn"></span></div><div class="tm side3"><b id="sc3">0</b> CT</div></div>
  <div class="rsel"><button class="g" id="rp">◀</button><select id="rs">${rounds.map((t,k)=>`<option value="${k}">Ronda ${k+1}${win(k)?' · '+win(k):''}</option>`).join('')}</select><button class="g" id="rx">▶</button><label class="g" title="Incluir o tempo de compras (buytime) na ronda"><input type="checkbox" id="by"${buy?' checked':''}> Buytime</label></div></div>
- <div class="pl" id="pl3"></div>
- <div class="rc"><div id="ln"></div><div class="kp"><div class="kh">Kills <span id="kn">0</span></div><div id="kf"></div></div><div class="pl pr" id="pl2"></div>
- <div class="ut"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div></div>
+ <div class="pl" id="pl2"></div>
+ <div class="rc"><div id="ln"></div><div class="kp"><div class="kh">Kills <span id="kn">0</span></div><div id="kf"></div></div><div class="pl pr" id="pl3"></div>
+ <div class="ut"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div></div>
  <div class="bar"><div class="tlb" id="tlb"></div>
  <div class="ctl"><span id="tt" class="mut"></span><div class="grp"><button class="g" data-s="-60">−15</button><button class="g" data-s="-20">−5</button></div><button id="pp" class="play">▶</button><div class="grp"><button class="g" data-s="20">+5</button><button class="g" data-s="60">+15</button></div>
  <div class="grp" id="spd">${[.25,.5,1,2,4].map(v=>`<button class="g${v==1?' on':''}" data-v="${v}">${v}×</button>`).join('')}</div>
@@ -63,9 +67,14 @@ function demoPlay(D,el,p){
  <div class="grp" id="cols">${['#ffd43b','#ff6b6b','#51cf66','#4dabf7','#ffffff'].map((c,n)=>`<button class="g sw${n?'':' on'}" data-c="${c}" style="--sw:${c}"></button>`).join('')}<input type="color" id="cc" value="#ffd43b" title="Cor personalizada"></div>
  <div class="grp" id="durg"><select id="dur"><option value="640">Visível 10 s</option><option value="320">Visível 5 s</option><option value="1920">Visível 30 s</option><option value="0">Ronda toda</option></select></div>
  <div class="grp"><button class="g" id="un" title="Desfazer">↶</button><button class="g" id="cl">${D.board?'🗑 Limpar':'🗑 Ronda'}</button></div>
- <div class="grp"><button class="g" id="nt">📝 Notas <span id="nc">0</span></button></div></div></div>
- <div class="nd" id="nd"><div class="kh">Anotações</div><div class="row" style="flex-wrap:nowrap;margin-bottom:10px"><input type="text" id="ni" placeholder="Nota neste instante" style="flex:1"><button id="na">+</button></div><div id="nl"></div></div></div>`;
+ <div class="grp"><button class="g" id="nt">📝 Notas <span id="nc">0</span></button></div>
+ <div class="grp">${D.board?'':`<label class="g" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}> Utilidades</label>`}<button class="g" id="fs" title="Ecrã inteiro">⛶</button></div></div></div>
+ <div class="nd" id="nd"><div class="kh">Anotações</div><div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input type="text" id="nti" style="flex:1" placeholder="Título"></div><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><button id="na" style="margin:8px 0 10px;width:100%">Adicionar nota</button><div id="nl"></div></div></div>`;
  const cv=document.getElementById('cv'),c=cv.getContext('2d'),$$=id=>document.getElementById(id);
+ const stg=el.querySelector('.stg');
+ const fit=()=>{if(!document.body.contains(stg)){removeEventListener('resize',fit);document.removeEventListener('fullscreenchange',fit);return}stg.style.height=document.fullscreenElement===stg?'100vh':Math.max(560,innerHeight-(stg.getBoundingClientRect().top+scrollY)-2)+'px'};
+ addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);fit();
+ $$('fs').onclick=()=>{document.fullscreenElement?document.exitFullscreen():stg.requestFullscreen&&stg.requestFullscreen()};
  let i=0,play=false,spd=1,last=performance.now(),lastI=-1,lastR=-2,bg=null,rs=t0,re=t1;
  function mkBg(){const o=document.createElement('canvas');o.width=o.height=S;const g=o.getContext('2d');
   for(const f of D.fr.values())for(const r of f){const[x,y]=P(r.X,r.Y);g.fillStyle='rgba(130,170,255,.16)';g.fillRect(x-9,y-9,18,18)}
@@ -82,12 +91,13 @@ function demoPlay(D,el,p){
  $$('spd').onclick=e=>{const v=e.target.dataset.v;if(!v)return;spd=+v;[...$$('spd').children].forEach(b=>b.classList.toggle('on',b===e.target))};
  const pcr=t=>(Math.min(1,Math.max(0,(t-rs)/(re-rs)))*100).toFixed(2)+'%';
  function setRound(k){curFe=feOf(k);curPl=plants.find(q=>q>=curFe&&q<rend(k))||0;rs=rounds[k]===undefined?t0:st(k);re=rend(k);lastR=k;$$('rs').value=k;$$('rn').textContent='R'+(k+1);
-  $$('tlb').innerHTML='<u></u>'+D.deaths.filter(d=>d.tick>=rs&&d.tick<re).map(d=>{const f=D.fr.get(D.T[idxOf(d.tick)])||[],a=f.find(r=>r.steamid===d.attacker_steamid);return`<s style="left:${pcr(d.tick)};background:${a?col(a.team_num):'#ff5d5d'}" data-t="${d.tick-160}" title="${esc(d.attacker_name||'?')} → ${esc(d.user_name||'?')}"></s>`}).join('')+anno.notes.filter(n=>rIdx(n.t)===k).map(n=>`<b style="left:${pcr(n.t)};background:${n.c||'#ffd43b'}" data-t="${n.t}" title="${esc(n.text)}"></b>`).join('')+'<i id="cur"></i>'}
+  $$('tlb').innerHTML='<u></u>'+D.deaths.filter(d=>d.tick>=rs&&d.tick<re).map(d=>{const f=D.fr.get(D.T[idxOf(d.tick)])||[],a=f.find(r=>r.steamid===d.attacker_steamid);return`<s style="left:${pcr(d.tick)};background:${a?col(a.team_num):'#ff5d5d'}" data-t="${d.tick-160}" title="${esc(d.attacker_name||'?')} → ${esc(d.user_name||'?')}"></s>`}).join('')+anno.notes.filter(n=>rIdx(n.t)===k).map(n=>`<b style="left:${pcr(n.t)};background:${n.c||'#ffd43b'}" data-t="${n.t}" title="${esc(n.title||n.text||'')}"></b>`).join('')+'<i id="cur"></i>'}
  function draw(){
   c.clearRect(0,0,S,S);
   const a=Math.floor(i),f=i-a,A=D.fr.get(D.T[a]),B=D.fr.get(D.T[Math.min(a+1,N-1)])||A;
   const im=floor==='low'&&imgs.low?imgs.low:imgs.up;
   if(R&&im&&im.complete)c.drawImage(im,0,0,S,S);else if(!R){if(!bg)bg=mkBg();c.drawImage(bg,0,0)}
+  if(showU&&D.util){const tk=D.T[a];for(const u of D.util)if(tk>=u.t&&tk<u.e)drawUtil(u,tk)}
   const bm=new Map(B.map(r=>[r.steamid,r]));
   for(const r of A){const q=bm.get(r.steamid)||r,X=r.X+(q.X-r.X)*f,Y=r.Y+(q.Y-r.Y)*f,[x,y]=P(X,Y),dead=!(r.health>0);
    const onF=th==null||(floor==='low')===(r.Z<th);
@@ -117,16 +127,16 @@ function demoPlay(D,el,p){
  const rIdx=t=>{let k=0;rounds.forEach((r,n)=>{if(r<=t)k=n});return k};
  const vis=s=>{const t=D.T[Math.floor(i)];return t>=s.t&&(s.d?t<s.t+s.d:t<rend(rIdx(s.t)))};
  const dur=()=>D.board?0:+$$('dur').value;
- function renderLive(t){const L=anno.notes.filter(n=>D.board||(t>=n.t&&t<n.t+640));$$('ln').innerHTML=L.map(n=>`<div class="lnc" style="--c:${n.c||'#ffd43b'}">📝 ${esc(n.text)}</div>`).join('')}
+ function renderLive(t){const L=anno.notes.filter(n=>D.board||(t>=n.t&&t<n.t+640));$$('ln').innerHTML=L.map(n=>`<div class="lnc" style="--c:${n.c||'#ffd43b'}">${n.title?`<b>${esc(n.title)}</b>`:''}${n.text?`<div>${esc(n.text)}</div>`:''}</div>`).join('')}
  function refresh(){$$('nc').textContent=anno.notes.length;renderNotes();lastI=-1;if(lastR>=0)setRound(lastR)}
- function renderNotes(){const L=[...anno.notes].sort((a,b)=>a.t-b.t);$$('nl').innerHTML=L.length?L.map(n=>`<div class="mk" data-t="${n.t}"><em class="dt" style="background:${n.c||'#ffd43b'}"></em><time>R${rIdx(n.t)+1} ${fmt(Math.max(0,n.t-rounds[rIdx(n.t)])/64)}</time><span>${esc(n.text)}</span><u data-d="${n.id}">✕</u></div>`).join(''):'<div class="mut" style="padding:6px">Sem notas.</div>'}
+ function renderNotes(){const L=[...anno.notes].sort((a,b)=>a.t-b.t);$$('nl').innerHTML=L.length?L.map(n=>`<div class="mk" data-t="${n.t}"><em class="dt" style="background:${n.c||'#ffd43b'}"></em><time>R${rIdx(n.t)+1} ${fmt(Math.max(0,n.t-rounds[rIdx(n.t)])/64)}</time><span>${n.title?'<b>'+esc(n.title)+'</b><br>':''}${esc(n.text||'')}</span><u data-d="${n.id}">✕</u></div>`).join(''):'<div class="mut" style="padding:6px">Sem notas.</div>'}
  function drawShape(s){c.save();c.strokeStyle=c.fillStyle=s.c;c.lineWidth=s.w;c.lineCap=c.lineJoin='round';const q=s.pts.map(v=>P(v[0],v[1]));
   if(s.type==='pen'){c.beginPath();q.forEach((v,n)=>n?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]));c.stroke()}
   else if(s.type==='line'||s.type==='arrow'){const[a,b]=q;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();
    if(s.type==='arrow'){const g=Math.atan2(b[1]-a[1],b[0]-a[0]),h=14+s.w*2;c.beginPath();c.moveTo(b[0],b[1]);c.lineTo(b[0]-h*Math.cos(g-.45),b[1]-h*Math.sin(g-.45));c.lineTo(b[0]-h*Math.cos(g+.45),b[1]-h*Math.sin(g+.45));c.closePath();c.fill()}}
   else if(s.type==='circle'){const[a,b]=q;c.beginPath();c.arc(a[0],a[1],Math.hypot(b[0]-a[0],b[1]-a[1]),0,7);c.stroke()}
   else if(s.type==='text'){c.font='700 20px sans-serif';c.textAlign='center';c.lineWidth=4;c.strokeStyle='#0b0d12';c.strokeText(s.text,q[0][0],q[0][1]);c.fillText(s.text,q[0][0],q[0][1])}
-  else if(s.type==='util'){const U={smoke:['☁','#cbd5e1',144],molotov:['🔥','#ff7b2e',120],flash:['⚡','#ffe066',0],he:['💥','#ff6b6b',0]}[s.k]||['?','#fff',0],[x,y]=q[0];
+  else if(s.type==='util'){const U={smoke:['☁','#cbd5e1',144],molotov:['🔥','#ff7b2e',120],flash:['⚡','#ffe066',0],he:['💥','#ff6b6b',0],bomb:['💣','#ff6b6b',0]}[s.k]||['?','#fff',0],[x,y]=q[0];
    if(U[2]){const e=P(s.pts[0][0]+U[2],s.pts[0][1]),rad=Math.abs(e[0]-x);c.fillStyle=U[1]+'66';c.strokeStyle=U[1];c.lineWidth=2;c.beginPath();c.arc(x,y,rad,0,7);c.fill();c.stroke()}
    else{c.fillStyle='rgba(15,18,26,.75)';c.strokeStyle=U[1];c.lineWidth=2;c.beginPath();c.arc(x,y,17,0,7);c.fill();c.stroke()}
    c.font='22px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.fillText(U[0],x,y+1)}
@@ -149,16 +159,27 @@ function demoPlay(D,el,p){
  cv.onpointerup=()=>{if(!cur)return;const q=cur.pts;if(q.length>1&&(cur.type==='pen'||q[0][0]!==q[1][0]||q[0][1]!==q[1][1])){anno.shapes.push(cur);save();refresh()}cur=null};
  el.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;el.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('on',x===b));cv.style.cursor=tool?'crosshair':'default'});
  $$('cols').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;color=b.dataset.c;$$('cc').value=color;el.querySelectorAll('#cols .sw').forEach(x=>x.classList.toggle('on',x===b))};
+ const uu=$$('uu');if(uu)uu.onchange=e=>{showU=e.target.checked;try{localStorage.setItem('ugr_util',showU?'1':'0')}catch(x){}};
  $$('cc').oninput=e=>{color=e.target.value;el.querySelectorAll('#cols .sw').forEach(x=>x.classList.remove('on'))};
  $$('by').onchange=e=>{buy=e.target.checked;try{localStorage.setItem('ugr_buy',buy?'1':'0')}catch(x){}setRound(curR());if(D.T[Math.floor(i)]<rs)i=idxOf(rs);lastI=-1};
  $$('un').onclick=()=>{anno.shapes.pop();save();refresh()};
  $$('cl').onclick=()=>{const k=curR();if(confirm('Apagar todos os desenhos desta ronda?')){anno.shapes=anno.shapes.filter(s=>rIdx(s.t)!==k);save();refresh()}};
- function addNote(){const x=$$('ni').value.trim();if(!x)return;anno.notes.push({id:Date.now(),t:D.T[Math.floor(i)],text:x,c:color});$$('ni').value='';save();refresh()}
- $$('na').onclick=addNote;$$('ni').onkeydown=e=>{if(e.key==='Enter')addNote()};
+ function addNote(){const x=$$('ni').value.trim(),ti=$$('nti').value.trim();if(!x&&!ti)return;anno.notes.push({id:Date.now(),t:D.T[Math.floor(i)],title:ti,text:x,c:color});$$('ni').value='';$$('nti').value='';save();refresh()}
+ $$('na').onclick=addNote;$$('ni').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))addNote()};
  $$('nl').onclick=e=>{const d=e.target.dataset.d;if(d){anno.notes=anno.notes.filter(n=>String(n.id)!==d);save();return refresh()}const r=e.target.closest('.mk');if(r){i=idxOf(+r.dataset.t);play=false;$$('pp').textContent='▶'}};
  $$('nt').onclick=()=>$$('nd').classList.toggle('open');
  try{tx('readonly',s=>s.get(AK)).then(r=>{if(r&&r.anno){anno=r.anno;refresh()}}).catch(()=>{})}catch(e){}
 
+ const teamOf=u=>{if(u.tm===undefined){const r=(D.fr.get(D.T[idxOf(u.t)])||[]).find(x=>x.steamid===u.s);u.tm=r?r.team_num:0}return u.tm};
+ function drawUtil(u,tk){const[x,y]=P(u.x,u.y),onF=th==null||(floor==='low')===(u.z<th),tc=teamOf(u)?col(teamOf(u)):'#cbd5e1',left=(u.e-tk)/64,pg=(tk-u.t)/Math.max(1,u.e-u.t),rw=w=>Math.abs(P(u.x+w,u.y)[0]-x);
+  c.save();c.globalAlpha=(onF?1:.25)*Math.min(1,left+.2);
+  const ring=(r,f,s,lw)=>{c.fillStyle=f;c.strokeStyle=s;c.lineWidth=lw;c.beginPath();c.arc(x,y,r,0,7);c.fill();c.stroke()};
+  let ic;
+  if(u.k==='smoke'){ring(rw(144),'rgba(203,213,225,.55)',tc,3);ic='☁'}
+  else if(u.k==='molotov'){ring(rw(125),'rgba(255,123,46,.45)','#ff7b2e',3);ic='🔥'}
+  else if(u.k==='flash'){ring(14+pg*26,'rgba(255,224,102,.45)','#ffe066',2);ic='⚡'}
+  else{ring(14+pg*30,'rgba(255,107,107,.45)','#ff6b6b',2);ic='💥'}
+  c.font='20px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.fillText(ic,x,y+1);c.restore()}
  function loop(now){if(!document.body.contains(cv))return;if(play){i+=(now-last)/1000*4*spd;if(i>=N-1){i=N-1;play=false;$$('pp').textContent='▶'}}last=now;draw();requestAnimationFrame(loop)}
  requestAnimationFrame(loop);
 }

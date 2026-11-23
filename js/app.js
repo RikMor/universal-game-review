@@ -38,12 +38,12 @@ async function rm(g,id){if(confirm('Apagar este projeto?')){await del(id);try{co
 async function proj(gid,pid){
  const g=GAMES.find(x=>x.id===gid);let p;try{p=(await all()).find(x=>x.id===pid)}catch(e){}
  if(!p)return game(gid);
- if(p.board){$.innerHTML=`<span class="crumb" onclick="location.hash='${gid}'">← ${g.name}</span><h1>${esc(p.name)}</h1><div id="dv"></div>`;demoBoard(p,document.getElementById('dv'));return}
+ if(p.board){$.innerHTML=`<div class="crumbbar"><span class="crumb" onclick="location.hash='${gid}'">← ${g.name}</span><span class="ttl">${esc(p.name)}</span></div><div id="dv"></div>`;demoBoard(p,document.getElementById('dv'));return}
  if(url){URL.revokeObjectURL(url);url=null}
  const save=()=>put(p);
  const isVid=p.blob&&(p.blob.type.startsWith('video')||/\.(mp4|webm|mkv|mov)$/i.test(p.fileName||''));
  if(isVid)url=URL.createObjectURL(p.blob);
- $.innerHTML=`<span class="crumb" onclick="location.hash='${gid}'">← ${g.name}</span><h1>${esc(p.name)}</h1>
+ $.innerHTML=`<div class="crumbbar"><span class="crumb" onclick="location.hash='${gid}'">← ${g.name}</span><span class="ttl">${esc(p.name)}</span></div>
  ${!p.blob?`<div class="note">Importa uma gravação (mp4/webm) ou uma demo (.dem), ou usa só o mapa como quadro tático.<br><br><input type="file" id="f" accept="video/*,.dem" style="display:none"><button onclick="document.getElementById('f').click()">Importar ficheiro</button>${gid==='cs2'?' <button class="ghost" id="bd">Usar só o mapa (quadro tático)</button>':''}</div>`:
  !isVid?`<div id="dv"><div class="note"><b>${esc(p.fileName)}</b> guardado (formato sem leitor).</div></div>`:
  `<div class="player"><div><video id="v" src="${url}" controls></video><div class="tl" id="tl"></div>
@@ -64,6 +64,6 @@ async function proj(gid,pid){
  const sp=document.getElementById('sp'),S=[1,.5,.25,2];let si=0;sp.onclick=()=>{si=(si+1)%S.length;v.playbackRate=S[si];sp.textContent='Velocidade '+S[si]+'×'}
 }
 
-function route(){$.style.maxWidth='';const [g,p]=location.hash.slice(1).split('/');if(!g)home();else if(!p)game(g);else proj(g,p)}
+function route(){$.className='';const [g,p]=location.hash.slice(1).split('/');if(!g)home();else if(!p)game(g);else proj(g,p)}
 addEventListener('hashchange',route);
 open().then(d=>{db=d}).catch(()=>{}).finally(route);
