@@ -13,14 +13,18 @@ Plataforma pessoal de análise, revisão e treino de videojogos. Corre 100% no n
   - timeline **só da ronda atual**, com as kills marcadas (cor da equipa);
   - seletor de rondas (◀ lista ▶) por baixo do placar;
   - velocidades 0.25× a 4× e saltos de ±5 s / ±15 s;
-  - piso superior/inferior (Nuke, Train, Vertigo…).
+  - piso superior/inferior (Nuke, Train, Vertigo…);
+  - **desenhos** sobre o radar: livre, linha, seta, círculo, texto e borracha, em 5 cores, ligados ao instante da partida (visíveis 5 s / 10 s / 30 s ou a ronda toda), com desfazer e limpar ronda;
+  - **notas** por instante (painel 📝 Notas): clicar numa nota salta para esse momento; aparecem como losangos amarelos na timeline da ronda;
+  - desenhos e notas ficam guardados no navegador, por projeto (registo `<id>:anno` no IndexedDB), sem reescrever o ficheiro da demo.
+- **Quadro tático (só o mapa)**: num projeto vazio do CS2, "Usar só o mapa" abre o radar do mapa escolhido (25 mapas, com piso inferior) para desenhar estratégias e escrever notas, sem precisar de demo. Cada mapa guarda os seus próprios desenhos e notas.
 - Radares incluídos para 25 mapas (ver `assets/radars/radars.json`).
 
 ## Ainda não existe
 
 - Deadlock (o `.dem` é Source 2, deve usar o mesmo parser; falta testar e ter o radar).
 - Vista 3D com o mapa texturizado.
-- Desenhos, gravação de voz, treinos múltiplos por partida, exportação PDF/vídeo/projeto (fases 3–9 do plano).
+- Desenhos e notas no leitor de vídeo (por agora só nas demos), gravação de voz, treinos múltiplos por partida, exportação PDF/vídeo/projeto (fases 4–9 do plano).
 
 ## Estrutura
 
@@ -28,7 +32,7 @@ Plataforma pessoal de análise, revisão e treino de videojogos. Corre 100% no n
 index.html                 página única (hash routing: #cs2, #cs2/<projeto>)
 css/style.css              estilos (tema claro/escuro automático)
 js/app.js                  rotas, IndexedDB, biblioteca, leitor de vídeo e marcadores
-js/demo-viewer.js          leitura da demo, radar 2D e interface de reprodução
+js/demo-viewer.js          leitura da demo, radar 2D, reprodução, desenhos e notas
 js/vendor/demoparser.js    glue do parser (expõe window.DPM)
 assets/wasm/               demoparser_bg.wasm (parser de demos)
 assets/radars/             imagens dos radares (.webp) + radars.json (calibração)

@@ -30,24 +30,26 @@ async function game(id){
  let ps=[];try{ps=(await all()).filter(p=>p.game===id).sort((a,b)=>b.created-a.created)}catch(e){}
  $.innerHTML=`<span class="crumb" onclick="location.hash=''">← Jogos</span><h1>${g.name}</h1><p class="mut">Projetos e sessões de treino</p>
  <div class="row" style="margin:18px 0"><input type="text" id="nm" placeholder="Nome do projeto (ex.: Mirage vs Team X)"><button onclick="create('${id}')">Novo projeto</button></div>
- ${ps.length?ps.map(p=>`<div class="proj" onclick="location.hash='${id}/${p.id}'"><div style="font-size:26px">${p.blob?'🎞️':'📁'}</div><div class="n"><div>${esc(p.name)}</div><div class="mut" style="font-size:13px">${p.fileName?esc(p.fileName):'Sem ficheiro'} · ${p.markers.length} marcadores · ${new Date(p.created).toLocaleDateString('pt-PT')}</div></div><button class="ghost" onclick="event.stopPropagation();rm('${id}','${p.id}')">Apagar</button></div>`).join(''):`<div class="note">Ainda não tens projetos de ${g.name}. Cria o primeiro acima.</div>`}`;
+ ${ps.length?ps.map(p=>`<div class="proj" onclick="location.hash='${id}/${p.id}'"><div style="font-size:26px">${p.board?'🗺️':p.blob?'🎞️':'📁'}</div><div class="n"><div>${esc(p.name)}</div><div class="mut" style="font-size:13px">${p.fileName?esc(p.fileName):p.board?'Quadro tático · '+esc((p.boardMap||'').replace('de_','')):'Sem ficheiro'} · ${p.markers.length} marcadores · ${new Date(p.created).toLocaleDateString('pt-PT')}</div></div><button class="ghost" onclick="event.stopPropagation();rm('${id}','${p.id}')">Apagar</button></div>`).join(''):`<div class="note">Ainda não tens projetos de ${g.name}. Cria o primeiro acima.</div>`}`;
 }
 async function create(g){const n=document.getElementById('nm').value.trim();if(!n)return;const id=Date.now().toString(36);try{await put({id,game:g,name:n,created:Date.now(),markers:[]})}catch(e){alert('Armazenamento local indisponível.')}location.hash=g+'/'+id}
-async function rm(g,id){if(confirm('Apagar este projeto?')){await del(id);game(g)}}
+async function rm(g,id){if(confirm('Apagar este projeto?')){await del(id);try{const ks=await tx('readonly',s=>s.getAllKeys());for(const k of ks||[])if(String(k).startsWith(id+':'))await del(k)}catch(e){}game(g)}}
 
 async function proj(gid,pid){
  const g=GAMES.find(x=>x.id===gid);let p;try{p=(await all()).find(x=>x.id===pid)}catch(e){}
  if(!p)return game(gid);
+ if(p.board){$.innerHTML=`<span class="crumb" onclick="location.hash='${gid}'">← ${g.name}</span><h1>${esc(p.name)}</h1><div id="dv"></div>`;demoBoard(p,document.getElementById('dv'));return}
  if(url){URL.revokeObjectURL(url);url=null}
  const save=()=>put(p);
  const isVid=p.blob&&(p.blob.type.startsWith('video')||/\.(mp4|webm|mkv|mov)$/i.test(p.fileName||''));
  if(isVid)url=URL.createObjectURL(p.blob);
  $.innerHTML=`<span class="crumb" onclick="location.hash='${gid}'">← ${g.name}</span><h1>${esc(p.name)}</h1>
- ${!p.blob?`<div class="note">Importa uma gravação (mp4/webm) para começar a analisar.<br><br><input type="file" id="f" accept="video/*,.dem" style="display:none"><button onclick="document.getElementById('f').click()">Importar ficheiro</button></div>`:
+ ${!p.blob?`<div class="note">Importa uma gravação (mp4/webm) ou uma demo (.dem), ou usa só o mapa como quadro tático.<br><br><input type="file" id="f" accept="video/*,.dem" style="display:none"><button onclick="document.getElementById('f').click()">Importar ficheiro</button>${gid==='cs2'?' <button class="ghost" id="bd">Usar só o mapa (quadro tático)</button>':''}</div>`:
  !isVid?`<div id="dv"><div class="note"><b>${esc(p.fileName)}</b> guardado (formato sem leitor).</div></div>`:
  `<div class="player"><div><video id="v" src="${url}" controls></video><div class="tl" id="tl"></div>
  <div class="row" style="margin-top:12px"><button class="ghost" id="sp">Velocidade 1×</button><button class="ghost" onclick="v.currentTime-=5">−5s</button><button class="ghost" onclick="v.currentTime+=5">+5s</button></div></div>
  <div class="side"><div class="row"><input type="text" id="mt" placeholder="Nota neste instante" style="flex:1"><button id="ad">+</button></div><div id="ml" style="margin-top:12px"></div></div></div>`}`;
+ const bd=document.getElementById('bd');if(bd)bd.onclick=async()=>{p.board=true;p.boardMap=p.boardMap||'de_mirage';try{await save()}catch(e){}proj(gid,pid)};
  const f=document.getElementById('f');
  if(f)f.onchange=async()=>{const x=f.files[0];if(!x)return;p.blob=x;p.fileName=x.name;try{await save()}catch(e){alert('Não foi possível guardar o ficheiro.')}proj(gid,pid)};
  if(!isVid){if(/\.dem$/i.test(p.fileName||''))demoView(p,document.getElementById('dv'));return}
