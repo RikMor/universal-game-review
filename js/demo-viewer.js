@@ -204,6 +204,7 @@ function demoPlay(D,el,p){
    c.restore()}
   $$('mq').onclick=()=>{mq.on=!mq.on;mq.pick=mq.drag=null;stg.classList.toggle('mq',mq.on);$$('mq').classList.toggle('on',mq.on);
    if(mq.on){play=false;$$('pp').textContent='▶'}else{const b=el.querySelector('#tl2 [data-tool=""]');if(b)b.click()}mqUi();bh()};
+  if(D.board){mq.on=true;stg.classList.add('mq');$$('mq').parentNode.style.display='none';mqUi();bh()}
   $$('mqa').onclick=()=>mqAdd(2);$$('mqb').onclick=()=>mqAdd(3);
   $$('mqr').onclick=()=>{if(confirm('Repor a maquete? Perdes as posições e as mortes atuais.'))mqSnap()};
   $$('mkp').onclick=e=>{const k=e.target.dataset.k,m=mqCur();if(k!==undefined&&m){m.kl.splice(+k,1);save();mqUi()}};
