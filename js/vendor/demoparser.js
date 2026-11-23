@@ -1,4 +1,4 @@
-// @counterstrat/demoparser 0.1.0 (MIT) - glue wasm-bindgen adaptado para <script> classico (expoe window.DPM)
+// @counterstrat/demoparser 0.1.0 (MIT) - glue wasm-bindgen adaptado para script classico (expoe window.DPM)
 window.DPM=(function(){/* @ts-self-types="./demoparser.d.ts" */
 
 /**
