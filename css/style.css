@@ -134,3 +134,14 @@ main.wide{max-width:none;padding:0}
 .tlb em#hov{background:rgba(255,255,255,.3);top:20px}
 .tlb{touch-action:none}.tlb b{cursor:pointer}
 @media(max-width:900px){.stg .nd.pop,.stg .mkp{left:10px}}
+
+/* visor de nota junto ao menu; logs da ronda em baixo à direita */
+.lc{position:absolute;left:278px;bottom:var(--bh,150px);width:300px;z-index:5;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.lc>*{pointer-events:auto}
+.lc .mkp,.lc .nv{position:static;left:auto;bottom:auto;width:100%}
+.lg{background:rgba(15,18,26,.9);border-radius:10px;padding:8px 10px;max-height:32vh;overflow:auto;font-size:12px}
+.lg .kh{font-weight:700;margin-bottom:4px;position:sticky;top:-8px;background:rgba(15,18,26,.95);padding:2px 0}
+.lg div[data-t]{padding:2px 0;cursor:pointer;overflow-wrap:anywhere}.lg div[data-t]:hover{background:rgba(255,255,255,.08)}
+.lg time{color:#8b93a7;font-variant-numeric:tabular-nums;margin-right:4px}
+.stg.board .lg{display:none}
+@media(max-width:900px){.lc{left:10px}}

@@ -14,7 +14,7 @@ async function demoParse(blob,say){
  const ev=async n=>{say('A ler eventos ('+n+')…');await _nx();try{return _rows(DPM.parseEvent(b,n))}catch(e){return []}};
  const deaths=await ev('player_death'),starts=await ev('round_start'),ends=await ev('round_end'),fes=await ev('round_freeze_end'),plants=await ev('bomb_planted');
  const sm=await ev('smokegrenade_detonate'),sx=await ev('smokegrenade_expired'),ib=await ev('inferno_startburn'),ie=await ev('inferno_expire'),fl=await ev('flashbang_detonate'),he=await ev('hegrenade_detonate');
- const wf=await ev('weapon_fire');
+ const wf=await ev('weapon_fire'),dfs=await ev('bomb_defused'),exs=await ev('bomb_exploded');
  const shots=wf.map(e=>({t:+e.tick,s:e.user_steamid,w:String(e.weapon||'')})).filter(x=>isFinite(x.t)&&x.s!=null&&!/knife|bayonet|flash|smoke|grenade|molotov|decoy|c4|taser|zeus/i.test(x.w)).sort((a,b)=>a.t-b.t);
  const pair=(a,b,k,def)=>a.map(e=>{const o=b.find(x=>x.entityid===e.entityid&&+x.tick>=+e.tick);return{k,t:+e.tick,e:o?+o.tick:+e.tick+def,x:+e.x,y:+e.y,z:+e.z,s:e.user_steamid,n:e.user_name}});
  const one=(a,k,def)=>a.map(e=>({k,t:+e.tick,e:+e.tick+def,x:+e.x,y:+e.y,z:+e.z,s:e.user_steamid,n:e.user_name}));
@@ -28,7 +28,7 @@ async function demoParse(blob,say){
  const fr=new Map();
  for(const r of rows){if(r.X==null)continue;let f=fr.get(r.tick);if(!f)fr.set(r.tick,f=[]);f.push(r)}
  if(!fr.size)throw new Error('Sem dados de posição na demo (formato inesperado).');
- return{map:h.map_name||'',T:[...fr.keys()].sort((a,b)=>a-b),fr,deaths,starts:starts.map(e=>+e.tick).sort((a,b)=>a-b),ends:ends.map(e=>({tick:+e.tick,w:String(e.winner||'')})),fe:fes.map(e=>+e.tick).sort((a,b)=>a-b),plants:plants.map(e=>+e.tick).sort((a,b)=>a-b),util,shots};
+ return{map:h.map_name||'',T:[...fr.keys()].sort((a,b)=>a-b),fr,deaths,starts:starts.map(e=>+e.tick).sort((a,b)=>a-b),ends:ends.map(e=>({tick:+e.tick,w:String(e.winner||'')})),fe:fes.map(e=>+e.tick).sort((a,b)=>a-b),plants:plants.map(e=>+e.tick).sort((a,b)=>a-b),util,shots,defuses:dfs.map(e=>+e.tick),explodes:exs.map(e=>+e.tick)};
 }
 function demoView(p,el){
  el.innerHTML='<div class="note" id="ds">A preparar…</div>';
@@ -48,7 +48,7 @@ function demoPlay(D,el,p){
  const col=t=>t==2?'#f08c00':'#4dabf7';
  const idxOf=t=>{let k=D.T.findIndex(x=>x>=t);return k<0?N-1:Math.max(0,k)};
  const rend=k=>rounds[k+1]||t1;
- const fes=D.fe||[],plants=D.plants||[];let buy=true,showU=true,showS=true;try{buy=localStorage.getItem('ugr_buy')!=='0';showU=localStorage.getItem('ugr_util')!=='0';showS=localStorage.getItem('ugr_shots')!=='0'}catch(e){}
+ const fes=D.fe||[],plants=D.plants||[];let buy=true,showU=true,showS=true;try{buy=localStorage.getItem('ugr_skipbuy')!=='1';showU=localStorage.getItem('ugr_util')!=='0';showS=localStorage.getItem('ugr_shots')!=='0'}catch(e){}
  const feOf=k=>{const x=fes.find(q=>q>=rounds[k]&&q<rend(k));return x??rounds[k]+960};
  const st=k=>buy?rounds[k]:feOf(k);let curFe=0,curPl=0;
  const GR={'Smoke Grenade':'☁','Flashbang':'⚡','High Explosive Grenade':'💥','Molotov':'🔥','Incendiary Grenade':'🔥','Decoy Grenade':'◎'};
@@ -57,7 +57,7 @@ function demoPlay(D,el,p){
  const win=k=>{const e=D.ends.find(e=>e.tick>=rounds[k]&&e.tick<rend(k));return e?e.w:''};
  el.innerHTML=`<div class="stg${D.board?' board':''}"><canvas id="cv" width="${S}" height="${S}"></canvas>
  <div class="tw"><div class="tc"><div class="tm side2">T <b id="sc2">0</b></div><div class="mid"><b id="tm">0:00</b><span id="rn"></span></div><div class="tm side3"><b id="sc3">0</b> CT</div></div>
- <div class="rsel"><button class="g" id="rp">◀</button><select id="rs">${rounds.map((t,k)=>`<option value="${k}">Ronda ${k+1}${win(k)?' · '+win(k):''}</option>`).join('')}</select><button class="g" id="rx">▶</button><label class="g" title="Incluir o tempo de compras (buytime) na ronda"><input type="checkbox" id="by"${buy?' checked':''}> Buytime</label></div></div>
+ <div class="rsel"><button class="g" id="rp">◀</button><select id="rs">${rounds.map((t,k)=>`<option value="${k}">Ronda ${k+1}${win(k)?' · '+win(k):''}</option>`).join('')}</select><button class="g" id="rx">▶</button><label class="g" title="Saltar o tempo de compras: a ronda começa quando o buytime acaba"><input type="checkbox" id="by"${buy?'':' checked'}> Sem buytime</label></div></div>
  <div class="pl" id="pl2"></div>
  <div class="rc"><div class="kp"><div class="kh">Kills <span id="kn">0</span></div><div id="kf"></div></div><div class="pl pr" id="pl3"></div>
  </div>
@@ -66,12 +66,12 @@ function demoPlay(D,el,p){
  <div class="grp" id="spd">${[.25,.5,1,2,4].map(v=>`<button class="g${v==1?' on':''}" data-v="${v}">${v}×</button>`).join('')}</div>
  ${R&&R.low&&!D.board?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}</div>
  </div>
- <div class="utp"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div><div class="mkp" id="mkp"></div><div class="nd pop" id="nd"><div class="kh">Criar nota</div><div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input type="text" id="nti" style="flex:1" placeholder="Título"></div><label class="nmq"><input type="checkbox" id="nmq" checked> 🧩 Anexar a maquete desta ronda</label><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><button id="na" style="margin:8px 0 10px;width:100%">Adicionar nota</button></div><div class="nd pop" id="nlp"><div class="kh">Notas</div><div id="nl"></div></div><div class="bl"><div class="ctl tools">${D.board?`<div class="grp"><select id="mp">${Object.keys(RADAR).sort((x,y)=>(x.startsWith('de_')?0:1)-(y.startsWith('de_')?0:1)||x.localeCompare(y)).map(m=>`<option value="${m}"${m===D.map?' selected':''}>${m.replace(/^(de|cs|ar)_/,'').replace(/_/g,' ')}</option>`).join('')}</select></div>${R&&R.low?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}`:''}<div class="grp" id="tl2">${[['','✋','Cursor'],['pen','✏️','Livre'],['line','／','Linha'],['arrow','➚','Seta'],['circle','◯','Círculo'],['text','T','Texto'],['erase','⌫','Borracha']].map(([k,ic,t],n)=>`<button class="g${n?'':' on'}" data-tool="${k}" title="${t}">${ic}</button>`).join('')}</div>
+ <div class="utp"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div><div class="lc"><div class="mkp" id="mkp"></div><div class="nv" id="nv"></div></div><div class="nd pop" id="nd"><div class="kh">Criar nota</div><div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input type="text" id="nti" style="flex:1" placeholder="Título"></div><label class="nmq"><input type="checkbox" id="nmq" checked> 🧩 Anexar a maquete desta ronda</label><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><button id="na" style="margin:8px 0 10px;width:100%">Adicionar nota</button></div><div class="nd pop" id="nlp"><div class="kh">Notas</div><div id="nl"></div></div><div class="bl"><div class="ctl tools">${D.board?`<div class="grp"><select id="mp">${Object.keys(RADAR).sort((x,y)=>(x.startsWith('de_')?0:1)-(y.startsWith('de_')?0:1)||x.localeCompare(y)).map(m=>`<option value="${m}"${m===D.map?' selected':''}>${m.replace(/^(de|cs|ar)_/,'').replace(/_/g,' ')}</option>`).join('')}</select></div>${R&&R.low?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}`:''}<div class="grp" id="tl2">${[['','✋','Cursor'],['pen','✏️','Livre'],['line','／','Linha'],['arrow','➚','Seta'],['circle','◯','Círculo'],['text','T','Texto'],['erase','⌫','Borracha']].map(([k,ic,t],n)=>`<button class="g${n?'':' on'}" data-tool="${k}" title="${t}">${ic}</button>`).join('')}</div>
  <div class="grp" id="cols">${['#ffd43b','#ff6b6b','#51cf66','#4dabf7','#ffffff'].map((c,n)=>`<button class="g sw${n?'':' on'}" data-c="${c}" style="--sw:${c}"></button>`).join('')}<input type="color" id="cc" value="#ffd43b" title="Cor personalizada"></div>
  <div class="grp" id="durg"><select id="dur"><option value="640">Visível 10 s</option><option value="320">Visível 5 s</option><option value="1920">Visível 30 s</option><option value="0">Ronda toda</option></select></div>
  <div class="grp"><button class="g" id="un" title="Desfazer">↶</button><button class="g" id="cl">${D.board?'🗑 Limpar':'🗑 Ronda'}</button></div>
  <div class="grp"><button class="g" id="mq" title="Maquete: arrasta os jogadores e as utilidades. ☠ Matar: clica no atirador e depois na vítima. Duplo clique renomeia; ⌫ ou botão direito apaga.">🧩 Maquete</button></div><div class="grp mqx"><button class="g" id="mqa" title="Adicionar jogador T">+ T</button><button class="g" id="mqb" title="Adicionar jogador CT">+ CT</button><button class="g" data-tool="m-kill" title="Matar: clica no atirador e depois na vítima">☠ Matar</button><button class="g" id="mqr" title="Repor a maquete">↻ Repor</button></div><div class="grp"><button class="g" id="nt">✏️ Criar nota</button><button class="g" id="nvw">📋 Ver notas <span id="nc">0</span></button></div>
- <div class="grp">${D.board?'':`<label class="g" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}> Utilidades</label><label class="g" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}> Tiros</label>`}<button class="g" id="fs" title="Ecrã inteiro">⛶</button></div></div></div><div class="br"><div class="nv" id="nv"></div><div id="ln"></div></div></div>`;
+ <div class="grp">${D.board?'':`<label class="g" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}> Utilidades</label><label class="g" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}> Tiros</label>`}<button class="g" id="fs" title="Ecrã inteiro">⛶</button></div></div></div><div class="br"><div class="lg" id="lg"></div><div id="ln" style="display:none"></div></div></div>`;
  const cv=document.getElementById('cv'),c=cv.getContext('2d'),$$=id=>document.getElementById(id);
  const stg=el.querySelector('.stg');
  const fit=()=>{if(!document.body.contains(stg)){removeEventListener('resize',fit);document.removeEventListener('fullscreenchange',fit);return}stg.style.height=document.fullscreenElement===stg?'100vh':Math.max(560,innerHeight-(stg.getBoundingClientRect().top+scrollY)-2)+'px'};
@@ -101,7 +101,7 @@ function demoPlay(D,el,p){
  el.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{i=Math.min(N-1,Math.max(0,i+ +b.dataset.s))});
  $$('spd').onclick=e=>{const v=e.target.dataset.v;if(!v)return;spd=+v;[...$$('spd').children].forEach(b=>b.classList.toggle('on',b===e.target))};
  const pcr=t=>(Math.min(1,Math.max(0,(t-rs)/(re-rs)))*100).toFixed(2)+'%';
- function setRound(k){curFe=feOf(k);curPl=plants.find(q=>q>=curFe&&q<rend(k))||0;rs=rounds[k]===undefined?t0:st(k);re=rend(k);lastR=k;mqUi();$$('rs').value=k;$$('rn').textContent='R'+(k+1);
+ function setRound(k){lastI=-1;buildLog(k);curFe=feOf(k);curPl=plants.find(q=>q>=curFe&&q<rend(k))||0;rs=rounds[k]===undefined?t0:st(k);re=rend(k);lastR=k;mqUi();$$('rs').value=k;$$('rn').textContent='R'+(k+1);
   $$('tlb').innerHTML='<u></u>'+D.deaths.filter(d=>d.tick>=rs&&d.tick<re).map(d=>{const f=D.fr.get(D.T[idxOf(d.tick)])||[],a=f.find(r=>r.steamid===d.attacker_steamid);return`<s style="left:${pcr(d.tick)};background:${a?col(a.team_num):'#ff5d5d'}" data-t="${d.tick-160}" title="${esc(d.attacker_name||'?')} → ${esc(d.user_name||'?')}"></s>`}).join('')+anno.notes.filter(n=>rIdx(n.t)===k).map(n=>`<b style="left:${pcr(n.t)};background:${n.c||'#ffd43b'}" data-t="${n.t}" data-n="${n.id}" title="${esc(n.title||n.text||'')}"></b>`).join('')+'<i id="cur"></i><em id="curt"></em>'}
  function draw(){
   c.clearRect(0,0,S,S);
@@ -123,11 +123,11 @@ function demoPlay(D,el,p){
   if(showS&&!mq.on)drawShots(tkn);
   for(const s of anno.shapes)if(vis(s))drawShape(s);if(cur)drawShape(cur);mqDraw();
   const t=D.T[a];
-  const cu=$$('cur');if(cu){cu.style.left=pcr(t);const ct=$$('curt');if(ct){ct.style.left=pcr(t);ct.textContent=fmt(Math.max(0,(t-rs)/64))}}
+  const cu=$$('cur');if(cu){cu.style.left=pcr(t);const ct=$$('curt');if(ct)ct.style.left=pcr(t)}
   if(a!==lastI){lastI=a;
    $$('tt').textContent=fmt(Math.max(0,(t-rs)/64))+' / '+fmt((re-rs)/64);
    let ck,lb;if(t<curFe){ck=buy?fmt((curFe-t)/64):'1:55';lb='COMPRAS'}else if(curPl&&t>=curPl){ck=fmt(Math.max(0,40-(t-curPl)/64));lb='BOMBA'}else{ck=fmt(Math.max(0,115-(t-curFe)/64));lb='RONDA'}
-   $$('tm').textContent=ck;$$('rn').textContent=lb+' · R'+(lastR+1);renderLive(t);
+   $$('tm').textContent=ck;{const ctt=$$('curt');if(ctt)ctt.textContent=ck}$$('rn').textContent=lb+' · R'+(lastR+1);renderLive(t);renderLog(t);
    let s3=0,s2=0;for(const e of D.ends)if(e.tick<=t){if(e.w==='CT')s3++;else if(e.w==='T')s2++}
    $$('sc3').textContent=s3;$$('sc2').textContent=s2;
    const ks=D.deaths.filter(d=>d.tick<=t),kd={},dd={};for(const d of ks){kd[d.attacker_steamid]=(kd[d.attacker_steamid]||0)+1;dd[d.user_steamid]=(dd[d.user_steamid]||0)+1}
@@ -148,6 +148,16 @@ function demoPlay(D,el,p){
   const delNote=id=>{anno.notes=anno.notes.filter(n=>String(n.id)!==String(id));if(String(selN)===String(id))selN=null;save();refresh()};
   function renderLive(t){return;const L=anno.notes.filter(n=>D.board||(t>=n.t&&t<n.t+640));const h=L.map(n=>`<div class="lnc" data-id="${n.id}" style="--c:${n.c||'#ffd43b'}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><span>${esc(nt(n))}</span></div>`).join('');if(h!==lastLn){lastLn=h;$$('ln').innerHTML=h}}
  function refresh(){$$('nc').textContent=anno.notes.length;renderNotes();lastI=-1;if(lastR>=0)setRound(lastR)}
+  let lgList=[],lgHtml='';
+  function buildLog(k){const s0=rounds[k]===undefined?t0:rounds[k],e0=rend(k),L=[],cl=r=>r?col(r.team):'#c3c9d6';
+   for(const d of D.deaths){const dt=+d.tick;if(dt<s0||dt>=e0)continue;const a=rowAt(d.attacker_steamid,dt),v=rowAt(d.user_steamid,dt);
+    L.push({t:dt,h:`<span style="color:${cl(a)}">${esc(d.attacker_name||'?')}</span> ☠ <span style="color:${cl(v)}">${esc(d.user_name||'?')}</span> <span class="mut">${esc(d.weapon||'')}${d.headshot?' ★':''}</span>`})}
+   for(const[arr,h]of[[D.plants,'💣 Bomba plantada'],[D.defuses,'🔧 Bomba desarmada'],[D.explodes,'💥 Bomba explodiu']])for(const t of arr||[])if(t>=s0&&t<e0)L.push({t,h});
+   for(const e of D.ends)if(e.tick>=s0&&e.tick<e0)L.push({t:e.tick,h:'🏁 Ronda para '+(e.w==='CT'?'CT':e.w==='T'?'T':'—')});
+   L.sort((a,b)=>a.t-b.t);lgList=L;lgHtml=''}
+  function renderLog(t){const rt=tk=>tk<curFe?'compras':fmt(Math.max(0,115-(tk-curFe)/64)),h=lgList.filter(x=>x.t<=t).map(x=>`<div data-t="${x.t}"><time>${rt(x.t)}</time> ${x.h}</div>`).join('')||'<div class="mut">Sem eventos ainda</div>';
+   if(h!==lgHtml){lgHtml=h;const g=$$('lg');g.innerHTML='<div class="kh">Logs · R'+(lastR+1)+'</div>'+h;g.scrollTop=g.scrollHeight}}
+  $$('lg').onclick=e=>{const r=e.target.closest('[data-t]');if(r){i=idxOf(+r.dataset.t-160);play=false;$$('pp').textContent='▶'}};
   function renderViewer(){const v=$$('nv'),n=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(mqPrev&&!(n&&n.mock)){const q=mqPrev;mqPrev=null;if(q.mock)anno.mocks[q.key]=q.mock;else delete anno.mocks[q.key];save();mqSet(q.on,false)}
   if(!n){v.style.display='none';v.innerHTML='';return}v.style.display='block';v.style.setProperty('--c',n.c||'#ffd43b');v.innerHTML='<b>'+esc(nt(n))+'</b>'+(n.text?'<div>'+esc(n.text)+'</div>':'')}
   function renderNotes(){renderViewer();const L=[...anno.notes].sort((a,b)=>a.t-b.t);$$('nl').innerHTML=L.length?L.map(n=>`<div class="mk${n.id===selN?' sel':''}" data-t="${n.t}" data-id="${n.id}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><em class="dt" style="background:${n.c||'#ffd43b'}"></em><time>R${rIdx(n.t)+1} ${fmt(Math.max(0,n.t-rounds[rIdx(n.t)])/64)}</time><b>${esc(nt(n))}</b></div>`).join(''):'<div class="mut" style="padding:6px">Sem notas.</div>'}
@@ -183,7 +193,7 @@ function demoPlay(D,el,p){
  const ts=$$('ts');if(ts)ts.onchange=e=>{showS=e.target.checked;try{localStorage.setItem('ugr_shots',showS?'1':'0')}catch(x){}};
  const uu=$$('uu');if(uu)uu.onchange=e=>{showU=e.target.checked;try{localStorage.setItem('ugr_util',showU?'1':'0')}catch(x){}};
  $$('cc').oninput=e=>{color=e.target.value;el.querySelectorAll('#cols .sw').forEach(x=>x.classList.remove('on'))};
- $$('by').onchange=e=>{buy=e.target.checked;try{localStorage.setItem('ugr_buy',buy?'1':'0')}catch(x){}setRound(curR());if(!buy&&D.T[Math.floor(i)]<rs)i=idxOf(rs);lastI=-1;draw()};
+ $$('by').onchange=e=>{buy=!e.target.checked;try{localStorage.setItem('ugr_skipbuy',buy?'0':'1')}catch(x){}setRound(curR());if(!buy&&D.T[Math.floor(i)]<rs)i=idxOf(rs);lastI=-1;draw()};
  $$('un').onclick=()=>{anno.shapes.pop();save();refresh()};
  $$('cl').onclick=()=>{const k=curR();if(confirm('Apagar todos os desenhos desta ronda?')){anno.shapes=anno.shapes.filter(s=>rIdx(s.t)!==k);save();refresh()}};
  function addNote(){const x=$$('ni').value.trim(),ti=$$('nti').value.trim();if(!x&&!ti)return;const nm={id:Date.now(),t:D.T[Math.floor(i)],title:ti,text:x,c:color},mc=mq.on&&$$('nmq').checked&&mqCur();if(mc)nm.mock=JSON.parse(JSON.stringify(mc));anno.notes.push(nm);$$('ni').value='';$$('nti').value='';save();refresh()}
