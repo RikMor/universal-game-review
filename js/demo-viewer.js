@@ -14,6 +14,8 @@ async function demoParse(blob,say){
  const ev=async n=>{say('A ler eventos ('+n+')…');await _nx();try{return _rows(DPM.parseEvent(b,n))}catch(e){return []}};
  const deaths=await ev('player_death'),starts=await ev('round_start'),ends=await ev('round_end'),fes=await ev('round_freeze_end'),plants=await ev('bomb_planted');
  const sm=await ev('smokegrenade_detonate'),sx=await ev('smokegrenade_expired'),ib=await ev('inferno_startburn'),ie=await ev('inferno_expire'),fl=await ev('flashbang_detonate'),he=await ev('hegrenade_detonate');
+ const wf=await ev('weapon_fire');
+ const shots=wf.map(e=>({t:+e.tick,s:e.user_steamid,w:String(e.weapon||'')})).filter(x=>isFinite(x.t)&&x.s!=null&&!/knife|bayonet|flash|smoke|grenade|molotov|decoy|c4|taser|zeus/i.test(x.w)).sort((a,b)=>a.t-b.t);
  const pair=(a,b,k,def)=>a.map(e=>{const o=b.find(x=>x.entityid===e.entityid&&+x.tick>=+e.tick);return{k,t:+e.tick,e:o?+o.tick:+e.tick+def,x:+e.x,y:+e.y,z:+e.z,s:e.user_steamid,n:e.user_name}});
  const one=(a,k,def)=>a.map(e=>({k,t:+e.tick,e:+e.tick+def,x:+e.x,y:+e.y,z:+e.z,s:e.user_steamid,n:e.user_name}));
  const util=[...pair(sm,sx,'smoke',1152),...pair(ib,ie,'molotov',448),...one(fl,'flash',96),...one(he,'he',64)].filter(u=>isFinite(u.x)&&isFinite(u.y));
@@ -26,7 +28,7 @@ async function demoParse(blob,say){
  const fr=new Map();
  for(const r of rows){if(r.X==null)continue;let f=fr.get(r.tick);if(!f)fr.set(r.tick,f=[]);f.push(r)}
  if(!fr.size)throw new Error('Sem dados de posição na demo (formato inesperado).');
- return{map:h.map_name||'',T:[...fr.keys()].sort((a,b)=>a-b),fr,deaths,starts:starts.map(e=>+e.tick).sort((a,b)=>a-b),ends:ends.map(e=>({tick:+e.tick,w:String(e.winner||'')})),fe:fes.map(e=>+e.tick).sort((a,b)=>a-b),plants:plants.map(e=>+e.tick).sort((a,b)=>a-b),util};
+ return{map:h.map_name||'',T:[...fr.keys()].sort((a,b)=>a-b),fr,deaths,starts:starts.map(e=>+e.tick).sort((a,b)=>a-b),ends:ends.map(e=>({tick:+e.tick,w:String(e.winner||'')})),fe:fes.map(e=>+e.tick).sort((a,b)=>a-b),plants:plants.map(e=>+e.tick).sort((a,b)=>a-b),util,shots};
 }
 function demoView(p,el){
  el.innerHTML='<div class="note" id="ds">A preparar…</div>';
@@ -46,7 +48,7 @@ function demoPlay(D,el,p){
  const col=t=>t==2?'#f08c00':'#4dabf7';
  const idxOf=t=>{let k=D.T.findIndex(x=>x>=t);return k<0?N-1:Math.max(0,k)};
  const rend=k=>rounds[k+1]||t1;
- const fes=D.fe||[],plants=D.plants||[];let buy=true,showU=true;try{buy=localStorage.getItem('ugr_buy')!=='0';showU=localStorage.getItem('ugr_util')!=='0'}catch(e){}
+ const fes=D.fe||[],plants=D.plants||[];let buy=true,showU=true,showS=true;try{buy=localStorage.getItem('ugr_buy')!=='0';showU=localStorage.getItem('ugr_util')!=='0';showS=localStorage.getItem('ugr_shots')!=='0'}catch(e){}
  const feOf=k=>{const x=fes.find(q=>q>=rounds[k]&&q<rend(k));return x??rounds[k]+960};
  const st=k=>buy?rounds[k]:feOf(k);let curFe=0,curPl=0;
  const GR={'Smoke Grenade':'☁','Flashbang':'⚡','High Explosive Grenade':'💥','Molotov':'🔥','Incendiary Grenade':'🔥','Decoy Grenade':'◎'};
@@ -57,19 +59,19 @@ function demoPlay(D,el,p){
  <div class="tw"><div class="tc"><div class="tm side2">T <b id="sc2">0</b></div><div class="mid"><b id="tm">0:00</b><span id="rn"></span></div><div class="tm side3"><b id="sc3">0</b> CT</div></div>
  <div class="rsel"><button class="g" id="rp">◀</button><select id="rs">${rounds.map((t,k)=>`<option value="${k}">Ronda ${k+1}${win(k)?' · '+win(k):''}</option>`).join('')}</select><button class="g" id="rx">▶</button><label class="g" title="Incluir o tempo de compras (buytime) na ronda"><input type="checkbox" id="by"${buy?' checked':''}> Buytime</label></div></div>
  <div class="pl" id="pl2"></div>
- <div class="rc"><div id="ln"></div><div class="kp"><div class="kh">Kills <span id="kn">0</span></div><div id="kf"></div></div><div class="pl pr" id="pl3"></div>
- <div class="ut"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div></div>
+ <div class="rc"><div class="kp"><div class="kh">Kills <span id="kn">0</span></div><div id="kf"></div></div><div class="pl pr" id="pl3"></div>
+ </div>
  <div class="bar"><div class="tlb" id="tlb"></div>
  <div class="ctl"><span id="tt" class="mut"></span><div class="grp"><button class="g" data-s="-60">−15</button><button class="g" data-s="-20">−5</button></div><button id="pp" class="play">▶</button><div class="grp"><button class="g" data-s="20">+5</button><button class="g" data-s="60">+15</button></div>
  <div class="grp" id="spd">${[.25,.5,1,2,4].map(v=>`<button class="g${v==1?' on':''}" data-v="${v}">${v}×</button>`).join('')}</div>
  ${R&&R.low&&!D.board?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}</div>
- <div class="ctl tools">${D.board?`<div class="grp"><select id="mp">${Object.keys(RADAR).sort((x,y)=>(x.startsWith('de_')?0:1)-(y.startsWith('de_')?0:1)||x.localeCompare(y)).map(m=>`<option value="${m}"${m===D.map?' selected':''}>${m.replace(/^(de|cs|ar)_/,'').replace(/_/g,' ')}</option>`).join('')}</select></div>${R&&R.low?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}`:''}<div class="grp" id="tl2">${[['','✋','Cursor'],['pen','✏️','Livre'],['line','／','Linha'],['arrow','➚','Seta'],['circle','◯','Círculo'],['text','T','Texto'],['erase','⌫','Borracha']].map(([k,ic,t],n)=>`<button class="g${n?'':' on'}" data-tool="${k}" title="${t}">${ic}</button>`).join('')}</div>
+ </div>
+ <div class="utp"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div><div class="bl"><div class="mkp" id="mkp"></div><div class="ctl tools">${D.board?`<div class="grp"><select id="mp">${Object.keys(RADAR).sort((x,y)=>(x.startsWith('de_')?0:1)-(y.startsWith('de_')?0:1)||x.localeCompare(y)).map(m=>`<option value="${m}"${m===D.map?' selected':''}>${m.replace(/^(de|cs|ar)_/,'').replace(/_/g,' ')}</option>`).join('')}</select></div>${R&&R.low?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}`:''}<div class="grp" id="tl2">${[['','✋','Cursor'],['pen','✏️','Livre'],['line','／','Linha'],['arrow','➚','Seta'],['circle','◯','Círculo'],['text','T','Texto'],['erase','⌫','Borracha']].map(([k,ic,t],n)=>`<button class="g${n?'':' on'}" data-tool="${k}" title="${t}">${ic}</button>`).join('')}</div>
  <div class="grp" id="cols">${['#ffd43b','#ff6b6b','#51cf66','#4dabf7','#ffffff'].map((c,n)=>`<button class="g sw${n?'':' on'}" data-c="${c}" style="--sw:${c}"></button>`).join('')}<input type="color" id="cc" value="#ffd43b" title="Cor personalizada"></div>
  <div class="grp" id="durg"><select id="dur"><option value="640">Visível 10 s</option><option value="320">Visível 5 s</option><option value="1920">Visível 30 s</option><option value="0">Ronda toda</option></select></div>
  <div class="grp"><button class="g" id="un" title="Desfazer">↶</button><button class="g" id="cl">${D.board?'🗑 Limpar':'🗑 Ronda'}</button></div>
  <div class="grp"><button class="g" id="mq" title="Maquete: mexe nos jogadores e diz quem mata quem">🧩 Maquete</button></div><div class="grp mqx"><button class="g" id="mqa" title="Adicionar jogador T">+ T</button><button class="g" id="mqb" title="Adicionar jogador CT">+ CT</button><button class="g" data-tool="m-kill" title="Matar: clica no atirador e depois na vítima">☠ Matar</button><button class="g" id="mqr" title="Repor a maquete">↻ Repor</button></div><div class="grp"><button class="g" id="nt">📝 Notas <span id="nc">0</span></button></div>
- <div class="grp">${D.board?'':`<label class="g" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}> Utilidades</label>`}<button class="g" id="fs" title="Ecrã inteiro">⛶</button></div></div></div>
- <div class="mkp" id="mkp"></div><div class="nd" id="nd"><div class="kh">Anotações</div><div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input type="text" id="nti" style="flex:1" placeholder="Título"></div><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><button id="na" style="margin:8px 0 10px;width:100%">Adicionar nota</button><div id="nl"></div></div></div>`;
+ <div class="grp">${D.board?'':`<label class="g" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}> Utilidades</label><label class="g" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}> Tiros</label>`}<button class="g" id="fs" title="Ecrã inteiro">⛶</button></div></div></div><div class="br"><div class="nd" id="nd"><div class="kh">Anotações</div><div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input type="text" id="nti" style="flex:1" placeholder="Título"></div><label class="nmq"><input type="checkbox" id="nmq" checked> 🧩 Anexar a maquete desta ronda</label><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><button id="na" style="margin:8px 0 10px;width:100%">Adicionar nota</button><div id="nl"></div></div><div id="ln"></div></div></div>`;
  const cv=document.getElementById('cv'),c=cv.getContext('2d'),$$=id=>document.getElementById(id);
  const stg=el.querySelector('.stg');
  const fit=()=>{if(!document.body.contains(stg)){removeEventListener('resize',fit);document.removeEventListener('fullscreenchange',fit);return}stg.style.height=document.fullscreenElement===stg?'100vh':Math.max(560,innerHeight-(stg.getBoundingClientRect().top+scrollY)-2)+'px'};
@@ -95,19 +97,24 @@ function demoPlay(D,el,p){
   $$('tlb').innerHTML='<u></u>'+D.deaths.filter(d=>d.tick>=rs&&d.tick<re).map(d=>{const f=D.fr.get(D.T[idxOf(d.tick)])||[],a=f.find(r=>r.steamid===d.attacker_steamid);return`<s style="left:${pcr(d.tick)};background:${a?col(a.team_num):'#ff5d5d'}" data-t="${d.tick-160}" title="${esc(d.attacker_name||'?')} → ${esc(d.user_name||'?')}"></s>`}).join('')+anno.notes.filter(n=>rIdx(n.t)===k).map(n=>`<b style="left:${pcr(n.t)};background:${n.c||'#ffd43b'}" data-t="${n.t}" title="${esc(n.title||n.text||'')}"></b>`).join('')+'<i id="cur"></i>'}
  function draw(){
   c.clearRect(0,0,S,S);
+  const ri0=curR();if(ri0!==lastR)setRound(ri0);
+  if(!buy&&!D.board&&D.T[Math.floor(i)]<rs)i=idxOf(rs);
   const a=Math.floor(i),f=i-a,A=D.fr.get(D.T[a]),B=D.fr.get(D.T[Math.min(a+1,N-1)])||A;
   const im=floor==='low'&&imgs.low?imgs.low:imgs.up;
   if(R&&im&&im.complete)c.drawImage(im,0,0,S,S);else if(!R){if(!bg)bg=mkBg();c.drawImage(bg,0,0)}
   if(showU&&D.util){const tk=D.T[a];for(const u of D.util)if(tk>=u.t&&tk<u.e)drawUtil(u,tk)}
-  const bm=new Map(B.map(r=>[r.steamid,r]));
+  const bm=new Map(B.map(r=>[r.steamid,r])),tkn=D.T[a]+f*((D.T[Math.min(a+1,N-1)]||D.T[a])-D.T[a]);
+  drawSkulls(D.T[a]);
   for(const r of A){const q=bm.get(r.steamid)||r,X=r.X+(q.X-r.X)*f,Y=r.Y+(q.Y-r.Y)*f,[x,y]=P(X,Y),dead=!(r.health>0);
+   if(dead)continue;
    const onF=th==null||(floor==='low')===(r.Z<th);
    c.globalAlpha=mq.on?.18:dead?.4:onF?1:.3;const cl=dead?'#8b93a7':col(r.team_num);
    if(r.yaw!=null&&!dead){const g=r.yaw*Math.PI/180;c.strokeStyle=cl;c.lineWidth=3;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(g)*28,y-Math.sin(g)*28);c.stroke()}
    c.fillStyle=cl;c.strokeStyle='#0b0d12';c.lineWidth=3;c.beginPath();c.arc(x,y,10,0,7);c.stroke();c.fill();
    c.font='600 14px sans-serif';c.textAlign='center';c.fillStyle='#fff';c.strokeText(r.name||'',x,y-16);c.fillText(r.name||'',x,y-16);c.globalAlpha=1}
+  if(showS&&!mq.on)drawShots(tkn);
   for(const s of anno.shapes)if(vis(s))drawShape(s);if(cur)drawShape(cur);mqDraw();
-  const t=D.T[a],ri=curR();if(ri!==lastR)setRound(ri);
+  const t=D.T[a];
   const cu=$$('cur');if(cu)cu.style.left=pcr(t);
   if(a!==lastI){lastI=a;
    $$('tt').textContent=fmt(Math.max(0,(t-rs)/64))+' / '+fmt((re-rs)/64);
@@ -129,7 +136,7 @@ function demoPlay(D,el,p){
  const vis=s=>{const t=D.T[Math.floor(i)];return t>=s.t&&(s.d?t<s.t+s.d:t<rend(rIdx(s.t)))};
  const dur=()=>D.board?0:+$$('dur').value;
   let selN=null,lastLn='';
-  const nt=n=>n.title||(n.text||'').slice(0,40)||'Nota';
+  const nt=n=>(n.mock?'🧩 ':'')+(n.title||(n.text||'').slice(0,40)||'Nota');
   const delNote=id=>{anno.notes=anno.notes.filter(n=>String(n.id)!==String(id));if(String(selN)===String(id))selN=null;save();refresh()};
   function renderLive(t){const L=anno.notes.filter(n=>D.board||(t>=n.t&&t<n.t+640));const h=L.map(n=>`<div class="lnc" data-id="${n.id}" style="--c:${n.c||'#ffd43b'}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><span>${esc(nt(n))}</span></div>`).join('');if(h!==lastLn){lastLn=h;$$('ln').innerHTML=h}}
  function refresh(){$$('nc').textContent=anno.notes.length;renderNotes();lastI=-1;if(lastR>=0)setRound(lastR)}
@@ -155,7 +162,7 @@ function demoPlay(D,el,p){
  cv.style.touchAction='none';
  cv.onpointerdown=e=>{if(mq.on&&mqDown(e))return;if(!tool||tool==='m-kill')return;const w=pt(e),t=D.T[Math.floor(i)];
   if(tool==='erase')return erase(w);
-  if(tool.startsWith('u-')){anno.shapes.push({id:Date.now(),t,d:dur(),type:'util',k:tool.slice(2),c:color,w:3,pts:[w]});save();refresh();return}
+  if(tool.startsWith('u-')){const m=mqCur();if(!m||!mq.on)return;(m.ut||(m.ut=[])).push({id:Date.now(),k:tool.slice(2),x:w[0],y:w[1]});save();return}
   if(tool==='text'){const x=prompt('Texto:');if(x){anno.shapes.push({id:Date.now(),t,d:dur(),type:'text',c:color,w:3,pts:[w],text:x});save();refresh()}return}
   play=false;$$('pp').textContent='▶';try{cv.setPointerCapture(e.pointerId)}catch(x){}
   cur={id:Date.now(),t,d:dur(),type:tool,c:color,w:4,pts:tool==='pen'?[w]:[w,w]}};
@@ -163,15 +170,18 @@ function demoPlay(D,el,p){
  cv.onpointerup=()=>{if(mq.drag){mq.drag=null;save();return}if(!cur)return;const q=cur.pts;if(q.length>1&&(cur.type==='pen'||q[0][0]!==q[1][0]||q[0][1]!==q[1][1])){anno.shapes.push(cur);save();refresh()}cur=null};
  el.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;el.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('on',x===b));cv.style.cursor=tool?'crosshair':'default'});
  $$('cols').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;color=b.dataset.c;$$('cc').value=color;el.querySelectorAll('#cols .sw').forEach(x=>x.classList.toggle('on',x===b))};
+ const ts=$$('ts');if(ts)ts.onchange=e=>{showS=e.target.checked;try{localStorage.setItem('ugr_shots',showS?'1':'0')}catch(x){}};
  const uu=$$('uu');if(uu)uu.onchange=e=>{showU=e.target.checked;try{localStorage.setItem('ugr_util',showU?'1':'0')}catch(x){}};
  $$('cc').oninput=e=>{color=e.target.value;el.querySelectorAll('#cols .sw').forEach(x=>x.classList.remove('on'))};
- $$('by').onchange=e=>{buy=e.target.checked;try{localStorage.setItem('ugr_buy',buy?'1':'0')}catch(x){}setRound(curR());if(D.T[Math.floor(i)]<rs)i=idxOf(rs);lastI=-1};
+ $$('by').onchange=e=>{buy=e.target.checked;try{localStorage.setItem('ugr_buy',buy?'1':'0')}catch(x){}setRound(curR());if(!buy&&D.T[Math.floor(i)]<rs)i=idxOf(rs);lastI=-1;draw()};
  $$('un').onclick=()=>{anno.shapes.pop();save();refresh()};
  $$('cl').onclick=()=>{const k=curR();if(confirm('Apagar todos os desenhos desta ronda?')){anno.shapes=anno.shapes.filter(s=>rIdx(s.t)!==k);save();refresh()}};
- function addNote(){const x=$$('ni').value.trim(),ti=$$('nti').value.trim();if(!x&&!ti)return;anno.notes.push({id:Date.now(),t:D.T[Math.floor(i)],title:ti,text:x,c:color});$$('ni').value='';$$('nti').value='';save();refresh()}
+ function addNote(){const x=$$('ni').value.trim(),ti=$$('nti').value.trim();if(!x&&!ti)return;const nm={id:Date.now(),t:D.T[Math.floor(i)],title:ti,text:x,c:color},mc=mq.on&&$$('nmq').checked&&mqCur();if(mc)nm.mock=JSON.parse(JSON.stringify(mc));anno.notes.push(nm);$$('ni').value='';$$('nti').value='';save();refresh()}
  $$('na').onclick=addNote;$$('ni').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))addNote()};
-  $$('nl').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.mk');if(r&&r.dataset.id){selN=+r.dataset.id===selN?null:+r.dataset.id;if(!D.board){i=idxOf(+r.dataset.t);play=false;$$('pp').textContent='▶'}renderNotes()}};
-  $$('ln').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.lnc');if(r){selN=+r.dataset.id;$$('nd').classList.add('open');bh();renderNotes()}};
+  $$('nl').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.mk');if(r&&r.dataset.id){selN=+r.dataset.id===selN?null:+r.dataset.id;if(!D.board){i=idxOf(+r.dataset.t);play=false;$$('pp').textContent='▶'}if(selN!==null)openNote(selN);renderNotes()}};
+  $$('ln').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.lnc');if(r){selN=+r.dataset.id;if(!D.board){i=idxOf(noteT(selN));play=false;$$('pp').textContent='▶'}openNote(selN);$$('nd').classList.add('open');bh();renderNotes()}};
+  const noteT=id=>{const n=anno.notes.find(x=>String(x.id)===String(id));return n?n.t:D.T[0]};
+  function openNote(id){const n=anno.notes.find(x=>String(x.id)===String(id));if(!n||!n.mock)return;(anno.mocks||(anno.mocks={}))[D.board?'b':String(rIdx(n.t))]=JSON.parse(JSON.stringify(n.mock));save();mqSet(true,false)}
   $$('nt').onclick=()=>{bh();$$('nd').classList.toggle('open')};
  try{tx('readonly',s=>s.get(AK)).then(r=>{if(r&&r.anno){anno=r.anno;anno.shapes=anno.shapes||[];anno.notes=anno.notes||[];anno.mocks=anno.mocks||{};refresh();mqUi()}}).catch(()=>{})}catch(e){}
 
@@ -181,19 +191,22 @@ function demoPlay(D,el,p){
   const mqCur=()=>(anno.mocks||(anno.mocks={}))[mqKey()];
   function mqSnap(){let tk;
    if(D.board){tk=[];for(const[tm,px]of[[2,70],[3,954]])for(let n=0;n<5;n++){const[x,y]=inv(px,300+n*95);tk.push({id:tm*100+n,tm,n:(tm==2?'T':'CT')+(n+1),x,y})}}
-   else tk=(D.fr.get(D.T[Math.floor(i)])||[]).filter(r=>r.health>0&&(r.team_num==2||r.team_num==3)).map((r,n)=>({id:n+1,tm:r.team_num,n:r.name||'',x:r.X,y:r.Y}));
-   (anno.mocks||(anno.mocks={}))[mqKey()]={tk,kl:[]};save();mqUi()}
+   else{const a=Math.floor(i),f=i-a,A=D.fr.get(D.T[a])||[],B=D.fr.get(D.T[Math.min(a+1,N-1)])||A,bm=new Map(B.map(r=>[r.steamid,r]));
+    tk=A.filter(r=>r.health>0&&(r.team_num==2||r.team_num==3)).map((r,n)=>{const q=bm.get(r.steamid)||r;return{id:n+1,tm:r.team_num,n:r.name||'',x:r.X+(q.X-r.X)*f,y:r.Y+(q.Y-r.Y)*f}})}
+   (anno.mocks||(anno.mocks={}))[mqKey()]={tk,kl:[],ut:[]};save();mqUi()}
   function mqAdd(tm){if(!mqCur())mqSnap();const m=mqCur(),k=m.tk.length%7,[x,y]=inv(512+k*34,512+k*34);m.tk.push({id:Math.max(0,...m.tk.map(t=>t.id))+1,tm,n:(tm==2?'T':'CT')+(m.tk.filter(t=>t.tm===tm).length+1),x,y});save();mqUi()}
   const mqHit=w=>{const m=mqCur();if(!m)return null;const[px,py]=P(w[0],w[1]);let b=null,bd=22;for(const t of m.tk){const[x,y]=P(t.x,t.y),d=Math.hypot(x-px,y-py);if(d<bd){bd=d;b=t}}return b};
-  function mqDown(e){const m=mqCur();if(!m)return false;const h=mqHit(pt(e));
+  const mqHitU=w=>{const m=mqCur();if(!m||!m.ut)return null;const[px,py]=P(w[0],w[1]);let b=null,bd=24;for(const u of m.ut){const[x,y]=P(u.x,u.y),d=Math.hypot(x-px,y-py);if(d<bd){bd=d;b=u}}return b};
+  function mqDown(e){const m=mqCur();if(!m)return false;const w=pt(e),h=mqHit(w),u=h?null:mqHitU(w);
    if(tool==='m-kill'){if(!h){mq.pick=null;return true}if(!mq.pick){mq.pick=h.id;return true}
     if(mq.pick!==h.id&&!m.kl.some(k=>k.a===mq.pick&&k.b===h.id)){m.kl.push({a:mq.pick,b:h.id});save();mqUi()}mq.pick=null;return true}
-   if(tool==='erase'){if(!h)return false;m.tk=m.tk.filter(t=>t!==h);m.kl=m.kl.filter(k=>k.a!==h.id&&k.b!==h.id);save();mqUi();return true}
-   if(!tool&&h){mq.drag=h;try{cv.setPointerCapture(e.pointerId)}catch(x){}return true}
+   if(tool==='erase'){if(!h&&!u)return false;if(h){m.tk=m.tk.filter(t=>t!==h);m.kl=m.kl.filter(k=>k.a!==h.id&&k.b!==h.id)}else m.ut=m.ut.filter(x=>x!==u);save();mqUi();return true}
+   if((!tool||tool.startsWith('u-'))&&(h||u)){mq.drag=h||u;try{cv.setPointerCapture(e.pointerId)}catch(x){}return true}
    return false}
   function mqUi(){const p=$$('mkp');if(!p)return;const m=mqCur(),nm=id=>{const t=m&&m.tk.find(x=>x.id===id);return t?esc(t.n):'?'};
-   p.innerHTML='<div class="kh">Maquete'+(m?' · '+m.tk.length+' jogadores':'')+'</div>'+(m&&m.kl.length?m.kl.map((k,x)=>`<div class="kr"><u class="x" data-k="${x}" title="Apagar">✕</u><b>${x+1}</b> ${nm(k.a)} ☠ ${nm(k.b)}</div>`).join(''):'<div class="mut">Arrasta os jogadores. Em ☠ Matar clica no atirador e depois na vítima. Duplo clique renomeia; ⌫ apaga.</div>')}
+   p.innerHTML='<div class="kh">Maquete'+(m?' · '+m.tk.length+' jogadores':'')+'</div>'+(m&&m.kl.length?m.kl.map((k,x)=>`<div class="kr"><u class="x" data-k="${x}" title="Apagar">✕</u><b>${x+1}</b> ${nm(k.a)} ☠ ${nm(k.b)}</div>`).join(''):'<div class="mut">Arrasta os jogadores e as utilidades. Em ☠ Matar clica no atirador e depois na vítima. Duplo clique renomeia; ⌫ ou botão direito apaga.</div>')}
   function mqDraw(){if(!mq.on)return;if(!mqCur())mqSnap();const m=mqCur(),by=id=>m.tk.find(t=>t.id===id),dead=new Set(m.kl.map(k=>k.b));c.save();
+   for(const u of (m.ut||[]))drawShape({type:'util',k:u.k,c:'#fff',w:3,pts:[[u.x,u.y]]});
    m.kl.forEach((k,n)=>{const A=by(k.a),B=by(k.b);if(!A||!B)return;const[x1,y1]=P(A.x,A.y),[x2,y2]=P(B.x,B.y),g=Math.atan2(y2-y1,x2-x1),ex=x2-Math.cos(g)*16,ey=y2-Math.sin(g)*16;
     c.strokeStyle=c.fillStyle='#ff4d4d';c.lineWidth=4;c.setLineDash([10,6]);c.beginPath();c.moveTo(x1+Math.cos(g)*16,y1+Math.sin(g)*16);c.lineTo(ex,ey);c.stroke();c.setLineDash([]);
     c.beginPath();c.moveTo(ex,ey);c.lineTo(ex-14*Math.cos(g-.45),ey-14*Math.sin(g-.45));c.lineTo(ex-14*Math.cos(g+.45),ey-14*Math.sin(g+.45));c.closePath();c.fill();
@@ -202,14 +215,37 @@ function demoPlay(D,el,p){
     c.font='600 14px sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.fillStyle='#fff';c.strokeStyle='#0b0d12';c.lineWidth=3;c.strokeText(t.n,x,y-20);c.fillText(t.n,x,y-20);
     if(d){c.font='16px sans-serif';c.textBaseline='middle';c.fillText('☠',x,y+1)}}
    c.restore()}
-  $$('mq').onclick=()=>{mq.on=!mq.on;mq.pick=mq.drag=null;stg.classList.toggle('mq',mq.on);$$('mq').classList.toggle('on',mq.on);
-   if(mq.on){play=false;$$('pp').textContent='▶'}else{const b=el.querySelector('#tl2 [data-tool=""]');if(b)b.click()}mqUi();bh()};
+  function mqSet(on,snap){mq.on=on;mq.pick=mq.drag=null;stg.classList.toggle('mq',on);$$('mq').classList.toggle('on',on);
+   if(on){play=false;$$('pp').textContent='▶';if(snap&&!D.board)mqSnap();const nb=$$('nmq');if(nb)nb.checked=true}else{const b=el.querySelector('#tl2 [data-tool=""]');if(b)b.click()}mqUi();bh()}
+  $$('mq').onclick=()=>mqSet(!mq.on,true);
   if(D.board){mq.on=true;stg.classList.add('mq');$$('mq').parentNode.style.display='none';mqUi();bh()}
   $$('mqa').onclick=()=>mqAdd(2);$$('mqb').onclick=()=>mqAdd(3);
   $$('mqr').onclick=()=>{if(confirm('Repor a maquete? Perdes as posições e as mortes atuais.'))mqSnap()};
   $$('mkp').onclick=e=>{const k=e.target.dataset.k,m=mqCur();if(k!==undefined&&m){m.kl.splice(+k,1);save();mqUi()}};
+  cv.oncontextmenu=e=>{if(!mq.on)return;const m=mqCur(),u=m&&mqHitU(pt(e));if(u){e.preventDefault();m.ut=m.ut.filter(x=>x!==u);save()}};
   cv.ondblclick=e=>{if(!mq.on)return;const h=mqHit(pt(e));if(h){const n=prompt('Nome do jogador:',h.n);if(n!==null){h.n=n.trim()||h.n;save();mqUi()}}};
   const teamOf=u=>{if(u.tm===undefined){const r=(D.fr.get(D.T[idxOf(u.t)])||[]).find(x=>x.steamid===u.s);u.tm=r?r.team_num:0}return u.tm};
+ // posição/olhar de um jogador num tick (interpolado)
+ function rowAt(sid,t){let lo=0,hi=N-1;while(lo<hi){const m=(lo+hi+1)>>1;if(D.T[m]<=t)lo=m;else hi=m-1}
+  const A=D.fr.get(D.T[lo])||[],ra=A.find(r=>r.steamid===sid);if(!ra)return null;
+  const nx=Math.min(lo+1,N-1),B=D.fr.get(D.T[nx])||A,rb=B.find(r=>r.steamid===sid)||ra,dt=D.T[nx]-D.T[lo],f=dt>0?Math.min(1,Math.max(0,(t-D.T[lo])/dt)):0;
+  return{X:ra.X+(rb.X-ra.X)*f,Y:ra.Y+(rb.Y-ra.Y)*f,Z:ra.Z,yaw:ra.yaw,team:ra.team_num}}
+ // tiros: rasto a partir do jogador, na direção do olhar, ~0,4 s
+ const SL=26;
+ function drawShots(tk){const SH=D.shots;if(!SH||!SH.length)return;let lo=0,hi=SH.length;while(lo<hi){const m=(lo+hi)>>1;if(SH[m].t<tk-SL)lo=m+1;else hi=m}
+  for(let q=lo;q<SH.length&&SH[q].t<=tk;q++){const sh=SH[q],r=rowAt(sh.s,sh.t);if(!r||r.yaw==null)continue;
+   const age=(tk-sh.t)/SL,[x,y]=P(r.X,r.Y),g=r.yaw*Math.PI/180,L=70+age*110,onF=th==null||(floor==='low')===(r.Z<th),cl=r.team==2?'#ffd8a8':'#a5d8ff';
+   c.save();c.globalAlpha=(onF?1:.3)*(1-age);c.lineCap='round';
+   c.strokeStyle=cl;c.lineWidth=3;c.beginPath();c.moveTo(x+Math.cos(g)*16,y-Math.sin(g)*16);c.lineTo(x+Math.cos(g)*L,y-Math.sin(g)*L);c.stroke();
+   c.fillStyle='#fff';c.beginPath();c.arc(x+Math.cos(g)*16,y-Math.sin(g)*16,6*(1-age)+2,0,7);c.fill();c.restore()}}
+ // caveiras: onde cada jogador morreu, até ao fim da ronda
+ function skPos(d){if(d._sp!==undefined)return d._sp;let r=null;for(let q=0;q<6&&!r;q++)r=rowAt(d.user_steamid,+d.tick-q*16);d._sp=r;return r}
+ function drawSkulls(tk){const k=curR(),s0=rounds[k],e0=rend(k);
+  for(const d of D.deaths){const dt=+d.tick;if(!(dt<=tk)||dt<s0||dt>=e0)continue;const r=skPos(d);if(!r)continue;
+   const[x,y]=P(r.X,r.Y),onF=th==null||(floor==='low')===(r.Z<th);
+   c.save();c.globalAlpha=mq.on?.18:onF?1:.3;c.fillStyle='rgba(15,18,26,.85)';c.strokeStyle=col(r.team);c.lineWidth=3;c.beginPath();c.arc(x,y,14,0,7);c.fill();c.stroke();
+   c.font='18px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.fillText('☠',x,y+1);
+   c.font='600 12px sans-serif';c.textBaseline='alphabetic';c.fillStyle='#c3c9d6';c.strokeStyle='#0b0d12';c.lineWidth=3;c.strokeText(d.user_name||'',x,y-20);c.fillText(d.user_name||'',x,y-20);c.restore()}}
  function drawUtil(u,tk){const[x,y]=P(u.x,u.y),onF=th==null||(floor==='low')===(u.z<th),tc=teamOf(u)?col(teamOf(u)):'#cbd5e1',left=(u.e-tk)/64,pg=(tk-u.t)/Math.max(1,u.e-u.t),rw=w=>Math.abs(P(u.x+w,u.y)[0]-x);
   c.save();c.globalAlpha=(onF?1:.25)*Math.min(1,left+.2);
   const ring=(r,f,s,lw)=>{c.fillStyle=f;c.strokeStyle=s;c.lineWidth=lw;c.beginPath();c.arc(x,y,r,0,7);c.fill();c.stroke()};

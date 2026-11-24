@@ -15,9 +15,11 @@ Plataforma pessoal de análise, revisão e treino de videojogos. Corre 100% no n
   - velocidades 0.25× a 4× e saltos de ±5 s / ±15 s;
   - **cartas dos jogadores** com arma (principal ou pistola), dinheiro, colete/capacete, kit de defusa, bomba e utilidades (☁ smoke, ⚡ flash, 🔥 molotov/incendiária, 💥 HE);
   - **relógio da ronda** em contagem decrescente: compras (buytime) → 1:55 → bomba 0:40. A opção **Buytime** (ao lado do seletor de rondas) liga/desliga o tempo de compras na ronda e na timeline, e fica guardada no navegador;
-  - **utilidades no mapa**: por baixo da equipa da direita, botões Smoke / Molo / Flash / HE / Bomba para colocar no radar (a smoke e o molotov mostram o raio aproximado);
+  - **utilidades no mapa**: aparecem no canto superior esquerdo **só quando a Maquete está ligada**; Smoke / Molo / Flash / HE / Bomba são colocadas na maquete e podem ser arrastadas (botão direito ou ⌫ apaga);
   - **cor livre** nos desenhos e nas notas (seletor de cor ao lado das 5 cores);
-  - **notas ao vivo**: aparecem no canto superior direito durante 10 s a partir do instante em que foram escritas, com a cor escolhida.
+  - **tiros**: rasto curto da arma na direção do olhar de quem dispara (opção **Tiros**);
+  - **caveiras** ☠ no local onde cada jogador morreu, até ao fim da ronda;
+  - **notas ao vivo**: aparecem no canto inferior direito durante 10 s a partir do instante em que foram escritas, com a cor escolhida.
   - **T à esquerda e CT à direita** (placar e cartas dos jogadores);
   - **ecrã largo**: o replay ocupa a largura toda da janela e a altura restante; o botão ⛶ passa a ecrã inteiro;
   - **utilidades dos jogadores no radar**: smokes (18 s), molotovs (enquanto ardem), flashes e HE aparecem no local de detonação, com a cor da equipa de quem lançou; a opção **Utilidades** liga/desliga. As trajetórias no ar ainda não são mostradas;
@@ -27,7 +29,9 @@ Plataforma pessoal de análise, revisão e treino de videojogos. Corre 100% no n
   - **notas** por instante (painel 📝 Notas): clicar numa nota salta para esse momento; aparecem como losangos amarelos na timeline da ronda;
   - desenhos e notas ficam guardados no navegador, por projeto (registo `<id>:anno` no IndexedDB), sem reescrever o ficheiro da demo.
 - **Quadro tático (só o mapa)**: num projeto vazio do CS2, "Usar só o mapa" abre o radar do mapa escolhido (25 mapas, com piso inferior) para desenhar estratégias e escrever notas, sem precisar de demo. Cada mapa guarda os seus próprios desenhos e notas.
-- **🧩 Maquete** (no quadro tático e dentro da demo): jogadores T/CT arrastáveis no radar para montar estratégias. `+ T` / `+ CT` adicionam, duplo clique renomeia, `⌫` apaga e `☠ Matar` liga atirador → vítima (setas numeradas; a vítima fica a cinzento com ☠; lista de mortes no canto inferior esquerdo). Na demo, a maquete parte das posições dos jogadores no instante atual (por ronda) e `↻ Repor` volta a tirar a "fotografia"; no quadro, parte de 5 T + 5 CT. Guardada por ronda (demo) ou por mapa (quadro).
+- **🧩 Maquete** (no quadro tático e dentro da demo): jogadores T/CT arrastáveis no radar para montar estratégias. `+ T` / `+ CT` adicionam, duplo clique renomeia, `⌫` apaga e `☠ Matar` liga atirador → vítima (setas numeradas; a vítima fica a cinzento com ☠; lista de mortes no canto inferior esquerdo). Na demo, **cada vez que clicas em Maquete** os jogadores ficam nas posições do instante atual e `↻ Repor` volta a tirar a "fotografia". Ao criar uma nota com a maquete ligada, a opção "Anexar a maquete" guarda uma cópia (jogadores, mortes e utilidades) na nota; ao abrir a nota a maquete é restaurada; no quadro, parte de 5 T + 5 CT. Guardada por ronda (demo) ou por mapa (quadro).
+- **Barra de ferramentas** (cursor, desenho, ↶, 🗑, Maquete, Notas, Utilidades, Tiros, ⛶) no canto inferior esquerdo, fora da timeline.
+- **Buytime**: ao desligar, salta logo o tempo de compras na ronda atual e nas seguintes.
 - **Notas**: só o título aparece (nas notas ao vivo e na lista); o ✕ para apagar fica no canto superior esquerdo; o botão 📝 Notas abre a lista no canto inferior direito e, ao escolher uma nota, mostra o texto e salta para o momento.
 - Radares incluídos para 25 mapas (ver `assets/radars/radars.json`).
 
