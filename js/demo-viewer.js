@@ -102,7 +102,7 @@ function demoPlay(D,el,p){
  $$('spd').onclick=e=>{const v=e.target.dataset.v;if(!v)return;spd=+v;[...$$('spd').children].forEach(b=>b.classList.toggle('on',b===e.target))};
  const pcr=t=>(Math.min(1,Math.max(0,(t-rs)/(re-rs)))*100).toFixed(2)+'%';
  function setRound(k){curFe=feOf(k);curPl=plants.find(q=>q>=curFe&&q<rend(k))||0;rs=rounds[k]===undefined?t0:st(k);re=rend(k);lastR=k;mqUi();$$('rs').value=k;$$('rn').textContent='R'+(k+1);
-  $$('tlb').innerHTML='<u></u>'+D.deaths.filter(d=>d.tick>=rs&&d.tick<re).map(d=>{const f=D.fr.get(D.T[idxOf(d.tick)])||[],a=f.find(r=>r.steamid===d.attacker_steamid);return`<s style="left:${pcr(d.tick)};background:${a?col(a.team_num):'#ff5d5d'}" data-t="${d.tick-160}" title="${esc(d.attacker_name||'?')} → ${esc(d.user_name||'?')}"></s>`}).join('')+anno.notes.filter(n=>rIdx(n.t)===k).map(n=>`<b style="left:${pcr(n.t)};background:${n.c||'#ffd43b'}" data-t="${n.t}" data-n="${n.id}" title="${esc(n.title||n.text||'')}"></b>`).join('')+'<i id="cur"></i><em id="curt"></em><em id="hov" style="display:none"></em>'}
+  $$('tlb').innerHTML='<u></u>'+D.deaths.filter(d=>d.tick>=rs&&d.tick<re).map(d=>{const f=D.fr.get(D.T[idxOf(d.tick)])||[],a=f.find(r=>r.steamid===d.attacker_steamid);return`<s style="left:${pcr(d.tick)};background:${a?col(a.team_num):'#ff5d5d'}" data-t="${d.tick-160}" title="${esc(d.attacker_name||'?')} → ${esc(d.user_name||'?')}"></s>`}).join('')+anno.notes.filter(n=>rIdx(n.t)===k).map(n=>`<b style="left:${pcr(n.t)};background:${n.c||'#ffd43b'}" data-t="${n.t}" data-n="${n.id}" title="${esc(n.title||n.text||'')}"></b>`).join('')+'<i id="cur"></i><em id="curt"></em>'}
  function draw(){
   c.clearRect(0,0,S,S);
   const ri0=curR();if(ri0!==lastR)setRound(ri0);
@@ -148,7 +148,8 @@ function demoPlay(D,el,p){
   const delNote=id=>{anno.notes=anno.notes.filter(n=>String(n.id)!==String(id));if(String(selN)===String(id))selN=null;save();refresh()};
   function renderLive(t){return;const L=anno.notes.filter(n=>D.board||(t>=n.t&&t<n.t+640));const h=L.map(n=>`<div class="lnc" data-id="${n.id}" style="--c:${n.c||'#ffd43b'}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><span>${esc(nt(n))}</span></div>`).join('');if(h!==lastLn){lastLn=h;$$('ln').innerHTML=h}}
  function refresh(){$$('nc').textContent=anno.notes.length;renderNotes();lastI=-1;if(lastR>=0)setRound(lastR)}
-  function renderViewer(){const v=$$('nv'),n=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(!n){v.style.display='none';v.innerHTML='';return}v.style.display='block';v.style.setProperty('--c',n.c||'#ffd43b');v.innerHTML='<b>'+esc(nt(n))+'</b>'+(n.text?'<div>'+esc(n.text)+'</div>':'')}
+  function renderViewer(){const v=$$('nv'),n=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(mqPrev&&!(n&&n.mock)){const q=mqPrev;mqPrev=null;if(q.mock)anno.mocks[q.key]=q.mock;else delete anno.mocks[q.key];save();mqSet(q.on,false)}
+  if(!n){v.style.display='none';v.innerHTML='';return}v.style.display='block';v.style.setProperty('--c',n.c||'#ffd43b');v.innerHTML='<b>'+esc(nt(n))+'</b>'+(n.text?'<div>'+esc(n.text)+'</div>':'')}
   function renderNotes(){renderViewer();const L=[...anno.notes].sort((a,b)=>a.t-b.t);$$('nl').innerHTML=L.length?L.map(n=>`<div class="mk${n.id===selN?' sel':''}" data-t="${n.t}" data-id="${n.id}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><em class="dt" style="background:${n.c||'#ffd43b'}"></em><time>R${rIdx(n.t)+1} ${fmt(Math.max(0,n.t-rounds[rIdx(n.t)])/64)}</time><b>${esc(nt(n))}</b></div>`).join(''):'<div class="mut" style="padding:6px">Sem notas.</div>'}
  function drawShape(s){c.save();c.strokeStyle=c.fillStyle=s.c;c.lineWidth=s.w;c.lineCap=c.lineJoin='round';const q=s.pts.map(v=>P(v[0],v[1]));
   if(s.type==='pen'){c.beginPath();q.forEach((v,n)=>n?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]));c.stroke()}
@@ -191,7 +192,8 @@ function demoPlay(D,el,p){
   $$('ln').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.lnc');if(r){const id=+r.dataset.id;if(selN===id){selN=null;renderNotes();return}selN=id;if(!D.board){i=idxOf(noteT(selN));play=false;$$('pp').textContent='▶'}openNote(selN);renderNotes()}};
   $$('nv').onclick=()=>{selN=null;renderNotes()};
   const noteT=id=>{const n=anno.notes.find(x=>String(x.id)===String(id));return n?n.t:D.T[0]};
-  function openNote(id){const n=anno.notes.find(x=>String(x.id)===String(id));if(!n||!n.mock)return;(anno.mocks||(anno.mocks={}))[D.board?'b':String(rIdx(n.t))]=JSON.parse(JSON.stringify(n.mock));save();mqSet(true,false)}
+  let mqPrev=null;
+  function openNote(id){const n=anno.notes.find(x=>String(x.id)===String(id));if(!n||!n.mock)return;const key=D.board?'b':String(rIdx(n.t));if(!mqPrev)mqPrev={on:mq.on,key,mock:anno.mocks&&anno.mocks[key]?JSON.parse(JSON.stringify(anno.mocks[key])):null};(anno.mocks||(anno.mocks={}))[key]=JSON.parse(JSON.stringify(n.mock));save();mqSet(true,false)}
   const popOut=e=>{if(!document.body.contains(stg)){document.removeEventListener('pointerdown',popOut);return}if(e.target.closest('.pop,#nt,#nvw'))return;$$('nd').classList.remove('open');$$('nlp').classList.remove('open')};document.addEventListener('pointerdown',popOut);
   $$('nt').onclick=()=>{bh();$$('nlp').classList.remove('open');$$('nd').classList.toggle('open')};
   $$('nvw').onclick=()=>{bh();$$('nd').classList.remove('open');$$('nlp').classList.toggle('open')};
