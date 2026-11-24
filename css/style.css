@@ -126,3 +126,11 @@ main.wide{max-width:none;padding:0}
 .bl .tools button.g.sw::after{inset:5px}
 .bl .tools select{padding:5px 6px;font-size:11px}
 .bl .tools #cc{width:24px;height:24px}
+
+/* popups de notas, mortes da maquete, tempo na timeline */
+.stg .nd.pop{left:278px;right:auto;top:auto;bottom:var(--bh,150px);width:300px;max-height:min(50vh,440px);z-index:7;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.stg .mkp{left:278px;bottom:var(--bh,150px);width:230px;max-height:34vh}
+.tlb em{position:absolute;top:-26px;transform:translateX(-50%);font-style:normal;font-size:11px;background:rgba(255,255,255,.16);padding:1px 6px;border-radius:5px;pointer-events:none;white-space:nowrap;color:#fff}
+.tlb em#hov{background:rgba(255,255,255,.3);top:20px}
+.tlb{touch-action:none}.tlb b{cursor:pointer}
+@media(max-width:900px){.stg .nd.pop,.stg .mkp{left:10px}}
