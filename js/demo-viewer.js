@@ -166,7 +166,7 @@ function demoPlay(D,el,p){
    c.textAlign='center';c.fillStyle='#fff';{const nu=nums.get(r.steamid);if(nu!==undefined){c.font='700 13px sans-serif';c.textBaseline='middle';c.lineWidth=3;c.strokeText(nu,x,y+1);c.fillText(nu,x,y+1)}}
    c.textBaseline='alphabetic';if(showN){c.font='600 14px sans-serif';c.lineWidth=3;c.strokeText(r.name||'',x,y-16);c.fillText(r.name||'',x,y-16)}c.globalAlpha=1}
   if(showS&&!mq.on)drawShots(tkn);
-  for(const s of anno.shapes)if(vis(s))drawShape(s);{const sn=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(sn&&sn.shapes)for(const s of sn.shapes)drawShape(s)}if(cur)drawShape(cur);mqDraw();
+  for(const s of anno.shapes)if(vis(s))drawShape(s);{const sn=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(sn&&sn.shapes&&(D.board||(D.T[a]>=sn.t&&D.T[a]<sn.t+640)))for(const s of sn.shapes)drawShape(s)}if(cur)drawShape(cur);mqDraw();
   const t=D.T[a];
   const cu=$$('cur');if(cu){cu.style.left=pcr(t);const ct=$$('curt');if(ct)ct.style.left=pcr(t)}
   if(a!==lastI){lastI=a;
