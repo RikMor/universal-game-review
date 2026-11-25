@@ -55,6 +55,7 @@ function demoPlay(D,el,p){
  const rounds=D.starts.filter((t,k,a)=>k===0||t-a[k-1]>640);
  const t0=D.T[0],t1=D.T[N-1];
  const col=t=>t==2?'#f08c00':'#4dabf7';
+ const DDO=v=>[[64,'1 s'],[128,'2 s'],[192,'3 s'],[320,'5 s'],[640,'10 s'],[960,'15 s'],[1920,'30 s'],[0,'Ronda toda']].map(([k,l])=>`<option value="${k}"${k===v?' selected':''}>${l}</option>`).join('');
  const idxOf=t=>{let k=D.T.findIndex(x=>x>=t);return k<0?N-1:Math.max(0,k)};
  const rend=k=>rounds[k+1]||t1;
  const fes=D.fe||[],plants=D.plants||[];let buy=true,showU=true,showS=true,showN=true;try{buy=localStorage.getItem('ugr_skipbuy')!=='1';showU=localStorage.getItem('ugr_util')!=='0';showS=localStorage.getItem('ugr_shots')!=='0';showN=localStorage.getItem('ugr_names')!=='0'}catch(e){}
@@ -96,7 +97,7 @@ function demoPlay(D,el,p){
  <div class="nbox">
   <div class="pn mkp" id="mkp"></div>
   <div class="pn nv" id="nv"></div>
-  <div class="pn nd pop" id="nd"><div class="kh">Criar nota<u class="x ndx" id="ndx" title="Fechar">✕</u></div><input type="text" id="nti" placeholder="Título"><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><label class="opt nmq"><input type="checkbox" id="nmq" checked>Anexar a maquete desta ronda</label><label class="opt" id="nshl"><input type="checkbox" id="nsh" checked><span id="nshs">Anexar os desenhos desta ronda</span></label><button class="pri wide" id="na">Adicionar nota</button></div>
+  <div class="pn nd pop" id="nd"><div class="kh">Criar nota<u class="x ndx" id="ndx" title="Fechar">✕</u></div><input type="text" id="nti" placeholder="Título"><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><label class="opt nmq"><input type="checkbox" id="nmq" checked>Anexar a maquete desta ronda</label><div class="rowc" id="ndr" style="margin:0 0 8px"><span class="mut" style="font-size:12px">Desenhos visíveis</span><select id="ndd">${DDO(192)}</select></div><label class="opt" id="nshl"><input type="checkbox" id="nsh" checked><span id="nshs">Anexar os desenhos desta ronda</span></label><button class="pri wide" id="na">Adicionar nota</button></div>
   <div class="pn nd pop" id="nlp"><div class="kh">Notas</div><div id="nl"></div></div>
   <div id="ln" style="display:none"></div>
  </div>
@@ -166,7 +167,7 @@ function demoPlay(D,el,p){
    c.textAlign='center';c.fillStyle='#fff';{const nu=nums.get(r.steamid);if(nu!==undefined){c.font='700 13px sans-serif';c.textBaseline='middle';c.lineWidth=3;c.strokeText(nu,x,y+1);c.fillText(nu,x,y+1)}}
    c.textBaseline='alphabetic';if(showN){c.font='600 14px sans-serif';c.lineWidth=3;c.strokeText(r.name||'',x,y-16);c.fillText(r.name||'',x,y-16)}c.globalAlpha=1}
   if(showS&&!mq.on)drawShots(tkn);
-  for(const s of anno.shapes)if(vis(s))drawShape(s);{const sn=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(sn&&sn.shapes&&(D.board||(D.T[a]>=sn.t&&D.T[a]<sn.t+640)))for(const s of sn.shapes)drawShape(s)}if(cur)drawShape(cur);mqDraw();
+  for(const s of anno.shapes)if(vis(s))drawShape(s);{const sn=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(sn&&sn.shapes&&(D.board||(D.T[a]>=sn.t&&(sn.dd===0?D.T[a]<rend(rIdx(sn.t)):D.T[a]<sn.t+(sn.dd??192)))))for(const s of sn.shapes)drawShape(s)}if(cur)drawShape(cur);mqDraw();
   const t=D.T[a];
   const cu=$$('cur');if(cu){cu.style.left=pcr(t);const ct=$$('curt');if(ct)ct.style.left=pcr(t)}
   if(a!==lastI){lastI=a;
@@ -181,7 +182,7 @@ function demoPlay(D,el,p){
  }
  // ---- anotações e desenhos (guardados à parte: registo "<id>:anno") ----
  const AK=p.id+':anno'+(D.board?':'+D.map:'');let anno={shapes:[],notes:[],mocks:{},pos:{}},tool='',color='#ffd43b',cur=null,sv=null;
- const NB={2:0,3:5};let plDrag=false;
+  const NB={2:0,3:5};let plDrag=false;
  const teamSorted=(A,tn)=>{const ps=anno.pos||{};return A.map((r,n)=>({r,n})).filter(o=>o.r.team_num==tn).sort((a,b)=>(ps[a.r.steamid]??99)-(ps[b.r.steamid]??99)||a.n-b.n).map(o=>o.r)};
  const numMap=A=>{const m=new Map();for(const tn of [2,3])teamSorted(A,tn).forEach((r,n)=>m.set(r.steamid,NB[tn]+Math.min(n,4)));return m};
  const inv=(x,y)=>R?[x*R.p[2]+R.p[0],R.p[1]-y*R.p[2]]:[(x-62)*sc+x0,y1-(y-62)*sc];
@@ -225,7 +226,7 @@ function demoPlay(D,el,p){
   const lgApply=()=>{LF.forEach(c=>$$('lg').classList.toggle('off-'+c,lgOff.has(c)));el.querySelectorAll('#lg [data-f]').forEach(b=>b.classList.toggle('on',!lgOff.has(b.dataset.f)))};lgApply();
   $$('lg').onclick=e=>{const b=e.target.closest('[data-f]');if(b){const c=b.dataset.f;lgOff.has(c)?lgOff.delete(c):lgOff.add(c);try{localStorage.setItem('ugr_lgoff',JSON.stringify([...lgOff]))}catch(x){}lgApply();return}const r=e.target.closest('[data-t]');if(r){i=idxOf(+r.dataset.t-160);play=false;$$('pp').textContent='▶'}};
   function renderViewer(){const v=$$('nv'),n=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(mqPrev&&!(n&&n.mock)){const q=mqPrev;mqPrev=null;if(q.mock)anno.mocks[q.key]=q.mock;else delete anno.mocks[q.key];save();mqSet(q.on,false)}
-  if(!n){v.style.display='none';v.innerHTML='';return}v.style.display='block';v.style.setProperty('--c',n.c||'#ffd43b');v.innerHTML='<b>'+esc(nt(n))+'</b>'+(n.text?'<div>'+esc(n.text)+'</div>':'')+(n.shapes&&n.shapes.length?'<small>✏️ '+n.shapes.length+(n.shapes.length>1?' desenhos':' desenho')+' desta nota no mapa</small>':'')}
+  if(!n){v.style.display='none';v.innerHTML='';return}v.style.display='block';v.style.setProperty('--c',n.c||'#ffd43b');v.innerHTML='<b>'+esc(nt(n))+'</b>'+(n.text?'<div>'+esc(n.text)+'</div>':'')+(n.shapes&&n.shapes.length?'<small>✏️ '+n.shapes.length+(n.shapes.length>1?' desenhos':' desenho')+' desta nota no mapa</small><label class="mut" style="font-size:12px;display:flex;gap:8px;align-items:center;margin-top:6px">Visíveis<select id="nvd">'+DDO(n.dd??192)+'</select></label>':'')}
   function renderNotes(){renderViewer();const L=[...anno.notes].sort((a,b)=>a.t-b.t);$$('nl').innerHTML=L.length?L.map(n=>`<div class="mk${n.id===selN?' sel':''}" data-t="${n.t}" data-id="${n.id}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><em class="dt" style="background:${n.c||'#ffd43b'}"></em><time>R${rIdx(n.t)+1} ${fmt(Math.max(0,n.t-rounds[rIdx(n.t)])/64)}</time><b>${esc(nt(n))}</b></div>`).join(''):'<div class="mut" style="padding:6px">Sem notas.</div>'}
  function drawShape(s){c.save();c.strokeStyle=c.fillStyle=s.c;c.lineWidth=s.w;c.lineCap=c.lineJoin='round';const q=s.pts.map(v=>P(v[0],v[1]));
   if(s.type==='pen'){c.beginPath();q.forEach((v,n)=>n?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]));c.stroke()}
@@ -266,12 +267,13 @@ function demoPlay(D,el,p){
  const roundShapes=()=>anno.shapes.filter(s=>rIdx(s.t)===curR());
   function shUi(){const n=roundShapes().length,l=$$('nshl');if(!l)return;l.style.display=n?'flex':'none';$$('nshs').textContent='Anexar '+n+(n>1?' desenhos':' desenho')+' desta ronda'}
   function addNote(){const x=$$('ni').value.trim(),ti=$$('nti').value.trim(),sh=roundShapes(),att=$$('nsh').checked&&sh.length>0;if(!x&&!ti&&!att)return;const nm={id:Date.now(),t:D.T[Math.floor(i)],title:ti,text:x,c:color},mc=mq.on&&$$('nmq').checked&&mqCur();if(mc)nm.mock=JSON.parse(JSON.stringify(mc));
-   if(att){nm.shapes=JSON.parse(JSON.stringify(sh));anno.shapes=anno.shapes.filter(s=>!sh.includes(s));selN=nm.id}
+   if(att){nm.dd=+$$('ndd').value;nm.shapes=JSON.parse(JSON.stringify(sh));anno.shapes=anno.shapes.filter(s=>!sh.includes(s));selN=nm.id}
    anno.notes.push(nm);$$('ni').value='';$$('nti').value='';$$('nd').classList.remove('open');save();refresh()}
   $$('na').onclick=addNote;$$('ni').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))addNote()};
   $$('nl').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.mk');if(r&&r.dataset.id){selN=+r.dataset.id===selN?null:+r.dataset.id;if(!D.board){i=idxOf(+r.dataset.t);play=false;$$('pp').textContent='▶'}if(selN!==null){openNote(selN);$$('nlp').classList.remove('open')}renderNotes()}};
   $$('ln').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.lnc');if(r){const id=+r.dataset.id;if(selN===id){selN=null;renderNotes();return}selN=id;if(!D.board){i=idxOf(noteT(selN));play=false;$$('pp').textContent='▶'}openNote(selN);renderNotes()}};
-  $$('nv').onclick=()=>{selN=null;renderNotes()};
+  $$('nv').onclick=e=>{if(e.target.closest('select,label'))return;selN=null;renderNotes()};
+  $$('nv').onchange=e=>{if(e.target.id!=='nvd')return;const n=anno.notes.find(x=>String(x.id)===String(selN));if(n){n.dd=+e.target.value;save()}};
   const noteT=id=>{const n=anno.notes.find(x=>String(x.id)===String(id));return n?n.t:D.T[0]};
   let mqPrev=null,ndAuto=false,ndDis=false;
   // ao desenhar ou com a Maquete ligada, o painel "Criar nota" abre sozinho (como se estivesses a adicionar uma nota)
