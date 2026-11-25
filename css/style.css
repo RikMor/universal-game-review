@@ -145,3 +145,28 @@ main.wide{max-width:none;padding:0}
 .lg time{color:#8b93a7;font-variant-numeric:tabular-nums;margin-right:4px}
 .stg.board .lg{display:none}
 @media(max-width:900px){.lc{left:10px}}
+
+/* logs detalhados */
+.br{width:350px}
+.lg{max-height:none;overflow:hidden;padding:8px 10px}
+.lg .kh{position:static;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;padding:0;background:none}
+.lg .lf{display:flex;gap:2px}.lg .lf button.g{padding:3px 6px;font-size:12px;border-radius:6px;opacity:.45}.lg .lf button.g.on{opacity:1;background:rgba(255,255,255,.18)}
+.lg #lgl{max-height:40vh;overflow:auto}
+.lg.off-kill [data-c=kill],.lg.off-hurt [data-c=hurt],.lg.off-nade [data-c=nade],.lg.off-bomb [data-c=bomb],.lg.off-buy [data-c=buy]{display:none}
+.mid{min-width:150px}
+
+/* layout em colunas: nada fica por cima de nada (os cartões encolhem e fazem scroll) */
+.colL,.colR{position:absolute;top:10px;bottom:var(--bh,150px);display:flex;flex-direction:column;gap:8px;z-index:4;pointer-events:none}
+.colL>*,.colR>*{pointer-events:auto}
+.colL{left:10px;width:258px}.colR{right:10px;width:350px}
+.colL .pl,.colR .pl,.colR .pl.pr{position:static;left:auto;right:auto;top:auto;width:auto;flex:1 1 0;min-height:140px;overflow:auto;scrollbar-width:thin;pointer-events:none}
+.colL .pl>*,.colR .pl>*{pointer-events:auto}
+.colL .utp{position:static;flex:none}
+.colL .mkp{position:static;left:auto;bottom:auto;width:auto;flex:none;max-height:20%}
+.colL .nd.pop{position:static;width:auto;flex:none;max-height:42%;box-shadow:none}
+.colL .ctl.tools{width:auto;max-width:none;flex:none}
+.colR .nv{flex:none;max-height:34%;width:auto}
+.colR .lg{flex:0 1 38%;min-height:90px;display:flex;flex-direction:column}
+.colR #lgl{max-height:none;flex:1;min-height:0}
+.stg.board .colR .pl,.stg.board .colL .pl{display:none}
+@media(max-width:1100px){.colL{width:220px}.colR{width:250px}}

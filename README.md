@@ -32,7 +32,7 @@ Plataforma pessoal de análise, revisão e treino de videojogos. Corre 100% no n
 - **🧩 Maquete** (no quadro tático e dentro da demo): jogadores T/CT arrastáveis no radar para montar estratégias. `+ T` / `+ CT` adicionam, duplo clique renomeia, `⌫` apaga e `☠ Matar` liga atirador → vítima (setas numeradas; a vítima fica a cinzento com ☠; lista de mortes no canto inferior esquerdo). Na demo, **cada vez que clicas em Maquete** os jogadores ficam nas posições do instante atual e `↻ Repor` volta a tirar a "fotografia". Ao criar uma nota com a maquete ligada, a opção "Anexar a maquete" guarda uma cópia (jogadores, mortes e utilidades) na nota; ao abrir a nota a maquete é restaurada; no quadro, parte de 5 T + 5 CT. Guardada por ronda (demo) ou por mapa (quadro).
 - **Barra de ferramentas** (cursor, desenho, ↶, 🗑, Maquete, Notas, Utilidades, Tiros, ⛶) no canto inferior esquerdo, fora da timeline.
 - **Sem buytime**: marcado, salta logo o tempo de compras (o relógio da ronda e a timeline começam quando o buytime acaba), na ronda atual e nas seguintes. A etiqueta de tempo da timeline mostra o mesmo relógio do topo.
-- **Logs da ronda** no canto inferior direito (kills, bomba, fim da ronda); clicar numa linha salta para esse momento. O conteúdo das notas aparece ao lado do menu inferior esquerdo.
+- **Logs detalhados da ronda** no canto inferior direito: compras, granadas lançadas, flashes (quem cegou quem e quanto tempo), dano (quem tirou quanto a quem, arma, zona do corpo, vida restante, fogo amigo), kills (cabeça, parede, smoke, distância, assists), bomba (largada, apanhada, plantar/desarmar) e fim da ronda, com filtros por categoria. O relógio do topo mostra os T e CT vivos; clicar numa linha salta para esse momento. O conteúdo das notas aparece ao lado do menu inferior esquerdo.
 - **Notas**: só o título aparece (nas notas ao vivo e na lista); o ✕ para apagar fica no canto superior esquerdo; o botão 📝 Notas abre a lista no canto inferior direito e, ao escolher uma nota, mostra o texto e salta para o momento.
 - Radares incluídos para 25 mapas (ver `assets/radars/radars.json`).
 
@@ -87,3 +87,6 @@ python3 -m http.server 8000
 
 - Parser de demos: [`@counterstrat/demoparser`](https://www.npmjs.com/package/@counterstrat/demoparser) (MIT), baseado no demoparser2 de LaihoE.
 - Imagens de radar e calibração: extraídas do repositório [MurkyYT/cs2-map-icons](https://github.com/MurkyYT/cs2-map-icons). Os radares são conteúdo da Valve; este projeto não é afiliado nem aprovado pela Valve. Uso pessoal.
+
+- **Zoom no mapa**: roda do rato (centrado no cursor) ou botões 🔍− / 1× / 🔍+ no menu (até 8×); com o cursor ✋, arrastar move o mapa quando há zoom (também com o botão do meio do rato).
+- **Layout em colunas**: jogadores, maquete, notas e menu à esquerda; jogadores, nota aberta e logs à direita. Os painéis não ficam por cima uns dos outros: os cartões dos jogadores encolhem e fazem scroll quando o espaço é pouco.

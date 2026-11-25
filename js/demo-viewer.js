@@ -15,6 +15,15 @@ async function demoParse(blob,say){
  const deaths=await ev('player_death'),starts=await ev('round_start'),ends=await ev('round_end'),fes=await ev('round_freeze_end'),plants=await ev('bomb_planted');
  const sm=await ev('smokegrenade_detonate'),sx=await ev('smokegrenade_expired'),ib=await ev('inferno_startburn'),ie=await ev('inferno_expire'),fl=await ev('flashbang_detonate'),he=await ev('hegrenade_detonate');
  const wf=await ev('weapon_fire'),dfs=await ev('bomb_defused'),exs=await ev('bomb_exploded');
+ const NM=['grenade_thrown','player_hurt','player_blind','item_purchase','bomb_beginplant','bomb_begindefuse','bomb_dropped','bomb_pickup'];
+ const flat=a=>Array.isArray(a)?(a.length&&a[0]&&Array.isArray(a[0].data)?a.flatMap(x=>x.data):a):[];
+ let X=null;
+ try{say('A ler detalhes da ronda (dano, granadas, bomba, compras)…');await _nx();const r=_norm(DPM.parseEvents(b,NM)),o={},put=(n,rows)=>{(o[n]||(o[n]=[])).push(...flat(rows))};
+  if(Array.isArray(r)){for(const e of r){if(Array.isArray(e)&&typeof e[0]==='string')put(e[0],e[1]);else if(e&&Array.isArray(e.data)&&(e.name||e.event_name))put(e.name||e.event_name,e.data);else if(e&&e.event_name)put(e.event_name,[e])}}
+  else if(r&&typeof r==='object'){for(const k of Object.keys(r))put(k,r[k])}
+  if(Object.keys(o).length)X=o}catch(e){X=null}
+ if(!X){X={};for(const n of NM)X[n]=await ev(n)}
+ const gx=n=>X[n]||[];
  const shots=wf.map(e=>({t:+e.tick,s:e.user_steamid,w:String(e.weapon||'')})).filter(x=>isFinite(x.t)&&x.s!=null&&!/knife|bayonet|flash|smoke|grenade|molotov|decoy|c4|taser|zeus/i.test(x.w)).sort((a,b)=>a.t-b.t);
  const pair=(a,b,k,def)=>a.map(e=>{const o=b.find(x=>x.entityid===e.entityid&&+x.tick>=+e.tick);return{k,t:+e.tick,e:o?+o.tick:+e.tick+def,x:+e.x,y:+e.y,z:+e.z,s:e.user_steamid,n:e.user_name}});
  const one=(a,k,def)=>a.map(e=>({k,t:+e.tick,e:+e.tick+def,x:+e.x,y:+e.y,z:+e.z,s:e.user_steamid,n:e.user_name}));
@@ -28,7 +37,7 @@ async function demoParse(blob,say){
  const fr=new Map();
  for(const r of rows){if(r.X==null)continue;let f=fr.get(r.tick);if(!f)fr.set(r.tick,f=[]);f.push(r)}
  if(!fr.size)throw new Error('Sem dados de posição na demo (formato inesperado).');
- return{map:h.map_name||'',T:[...fr.keys()].sort((a,b)=>a-b),fr,deaths,starts:starts.map(e=>+e.tick).sort((a,b)=>a-b),ends:ends.map(e=>({tick:+e.tick,w:String(e.winner||'')})),fe:fes.map(e=>+e.tick).sort((a,b)=>a-b),plants:plants.map(e=>+e.tick).sort((a,b)=>a-b),util,shots,defuses:dfs.map(e=>+e.tick),explodes:exs.map(e=>+e.tick)};
+ return{map:h.map_name||'',T:[...fr.keys()].sort((a,b)=>a-b),fr,deaths,starts:starts.map(e=>+e.tick).sort((a,b)=>a-b),ends:ends.map(e=>({tick:+e.tick,w:String(e.winner||'')})),fe:fes.map(e=>+e.tick).sort((a,b)=>a-b),plants:plants.map(e=>+e.tick).sort((a,b)=>a-b),util,shots,defuses:dfs.map(e=>+e.tick),explodes:exs.map(e=>+e.tick),plantR:plants,defR:dfs,exR:exs,thr:gx('grenade_thrown'),hurt:gx('player_hurt'),blind:gx('player_blind'),buys:gx('item_purchase'),bpl:gx('bomb_beginplant'),bdf:gx('bomb_begindefuse'),bdr:gx('bomb_dropped'),bpk:gx('bomb_pickup')};
 }
 function demoView(p,el){
  el.innerHTML='<div class="note" id="ds">A preparar…</div>';
@@ -58,20 +67,20 @@ function demoPlay(D,el,p){
  el.innerHTML=`<div class="stg${D.board?' board':''}"><canvas id="cv" width="${S}" height="${S}"></canvas>
  <div class="tw"><div class="tc"><div class="tm side2">T <b id="sc2">0</b></div><div class="mid"><b id="tm">0:00</b><span id="rn"></span></div><div class="tm side3"><b id="sc3">0</b> CT</div></div>
  <div class="rsel"><button class="g" id="rp">◀</button><select id="rs">${rounds.map((t,k)=>`<option value="${k}">Ronda ${k+1}${win(k)?' · '+win(k):''}</option>`).join('')}</select><button class="g" id="rx">▶</button><label class="g" title="Saltar o tempo de compras: a ronda começa quando o buytime acaba"><input type="checkbox" id="by"${buy?'':' checked'}> Sem buytime</label></div></div>
- <div class="pl" id="pl2"></div>
- <div class="rc"><div class="kp"><div class="kh">Kills <span id="kn">0</span></div><div id="kf"></div></div><div class="pl pr" id="pl3"></div>
- </div>
+ 
+ 
  <div class="bar"><div class="tlb" id="tlb"></div>
  <div class="ctl"><span id="tt" class="mut"></span><div class="grp"><button class="g" data-s="-60">−15</button><button class="g" data-s="-20">−5</button></div><button id="pp" class="play">▶</button><div class="grp"><button class="g" data-s="20">+5</button><button class="g" data-s="60">+15</button></div>
  <div class="grp" id="spd">${[.25,.5,1,2,4].map(v=>`<button class="g${v==1?' on':''}" data-v="${v}">${v}×</button>`).join('')}</div>
  ${R&&R.low&&!D.board?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}</div>
  </div>
- <div class="utp"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div><div class="lc"><div class="mkp" id="mkp"></div><div class="nv" id="nv"></div></div><div class="nd pop" id="nd"><div class="kh">Criar nota</div><div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input type="text" id="nti" style="flex:1" placeholder="Título"></div><label class="nmq"><input type="checkbox" id="nmq" checked> 🧩 Anexar a maquete desta ronda</label><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><button id="na" style="margin:8px 0 10px;width:100%">Adicionar nota</button></div><div class="nd pop" id="nlp"><div class="kh">Notas</div><div id="nl"></div></div><div class="bl"><div class="ctl tools">${D.board?`<div class="grp"><select id="mp">${Object.keys(RADAR).sort((x,y)=>(x.startsWith('de_')?0:1)-(y.startsWith('de_')?0:1)||x.localeCompare(y)).map(m=>`<option value="${m}"${m===D.map?' selected':''}>${m.replace(/^(de|cs|ar)_/,'').replace(/_/g,' ')}</option>`).join('')}</select></div>${R&&R.low?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}`:''}<div class="grp" id="tl2">${[['','✋','Cursor'],['pen','✏️','Livre'],['line','／','Linha'],['arrow','➚','Seta'],['circle','◯','Círculo'],['text','T','Texto'],['erase','⌫','Borracha']].map(([k,ic,t],n)=>`<button class="g${n?'':' on'}" data-tool="${k}" title="${t}">${ic}</button>`).join('')}</div>
+ <div class="colL"><div class="utp"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div><div class="pl" id="pl2"></div><div class="mkp" id="mkp"></div><div class="nd pop" id="nd"><div class="kh">Criar nota</div><div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input type="text" id="nti" style="flex:1" placeholder="Título"></div><label class="nmq"><input type="checkbox" id="nmq" checked> 🧩 Anexar a maquete desta ronda</label><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><button id="na" style="margin:8px 0 10px;width:100%">Adicionar nota</button></div><div class="nd pop" id="nlp"><div class="kh">Notas</div><div id="nl"></div></div><div class="ctl tools">${D.board?`<div class="grp"><select id="mp">${Object.keys(RADAR).sort((x,y)=>(x.startsWith('de_')?0:1)-(y.startsWith('de_')?0:1)||x.localeCompare(y)).map(m=>`<option value="${m}"${m===D.map?' selected':''}>${m.replace(/^(de|cs|ar)_/,'').replace(/_/g,' ')}</option>`).join('')}</select></div>${R&&R.low?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}`:''}<div class="grp" id="tl2">${[['','✋','Cursor'],['pen','✏️','Livre'],['line','／','Linha'],['arrow','➚','Seta'],['circle','◯','Círculo'],['text','T','Texto'],['erase','⌫','Borracha']].map(([k,ic,t],n)=>`<button class="g${n?'':' on'}" data-tool="${k}" title="${t}">${ic}</button>`).join('')}</div>
+ <div class="grp" id="zmg"><button class="g" id="zo" title="Menos zoom (ou roda do rato)">🔍−</button><button class="g" id="zr" title="Repor zoom">1×</button><button class="g" id="zi" title="Mais zoom (ou roda do rato)">🔍+</button></div>
  <div class="grp" id="cols">${['#ffd43b','#ff6b6b','#51cf66','#4dabf7','#ffffff'].map((c,n)=>`<button class="g sw${n?'':' on'}" data-c="${c}" style="--sw:${c}"></button>`).join('')}<input type="color" id="cc" value="#ffd43b" title="Cor personalizada"></div>
  <div class="grp" id="durg"><select id="dur"><option value="640">Visível 10 s</option><option value="320">Visível 5 s</option><option value="1920">Visível 30 s</option><option value="0">Ronda toda</option></select></div>
  <div class="grp"><button class="g" id="un" title="Desfazer">↶</button><button class="g" id="cl">${D.board?'🗑 Limpar':'🗑 Ronda'}</button></div>
  <div class="grp"><button class="g" id="mq" title="Maquete: arrasta os jogadores e as utilidades. ☠ Matar: clica no atirador e depois na vítima. Duplo clique renomeia; ⌫ ou botão direito apaga.">🧩 Maquete</button></div><div class="grp mqx"><button class="g" id="mqa" title="Adicionar jogador T">+ T</button><button class="g" id="mqb" title="Adicionar jogador CT">+ CT</button><button class="g" data-tool="m-kill" title="Matar: clica no atirador e depois na vítima">☠ Matar</button><button class="g" id="mqr" title="Repor a maquete">↻ Repor</button></div><div class="grp"><button class="g" id="nt">✏️ Criar nota</button><button class="g" id="nvw">📋 Ver notas <span id="nc">0</span></button></div>
- <div class="grp">${D.board?'':`<label class="g" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}> Utilidades</label><label class="g" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}> Tiros</label>`}<button class="g" id="fs" title="Ecrã inteiro">⛶</button></div></div></div><div class="br"><div class="lg" id="lg"></div><div id="ln" style="display:none"></div></div></div>`;
+ <div class="grp">${D.board?'':`<label class="g" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}> Utilidades</label><label class="g" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}> Tiros</label>`}<button class="g" id="fs" title="Ecrã inteiro">⛶</button></div></div></div><div class="colR"><div class="pl pr" id="pl3"></div><div class="nv" id="nv"></div><div class="lg" id="lg"><div class="kh"><span id="lgt">Logs</span><span class="lf"><button class="g on" data-f="kill" title="Kills">☠</button><button class="g on" data-f="hurt" title="Dano">💢</button><button class="g on" data-f="nade" title="Granadas e flashes">🧨</button><button class="g on" data-f="bomb" title="Bomba">💣</button><button class="g on" data-f="buy" title="Compras">🛒</button></span></div><div id="lgl"></div></div><div id="ln" style="display:none"></div></div></div>`;
  const cv=document.getElementById('cv'),c=cv.getContext('2d'),$$=id=>document.getElementById(id);
  const stg=el.querySelector('.stg');
  const fit=()=>{if(!document.body.contains(stg)){removeEventListener('resize',fit);document.removeEventListener('fullscreenchange',fit);return}stg.style.height=document.fullscreenElement===stg?'100vh':Math.max(560,innerHeight-(stg.getBoundingClientRect().top+scrollY)-2)+'px'};
@@ -101,9 +110,11 @@ function demoPlay(D,el,p){
  el.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{i=Math.min(N-1,Math.max(0,i+ +b.dataset.s))});
  $$('spd').onclick=e=>{const v=e.target.dataset.v;if(!v)return;spd=+v;[...$$('spd').children].forEach(b=>b.classList.toggle('on',b===e.target))};
  const pcr=t=>(Math.min(1,Math.max(0,(t-rs)/(re-rs)))*100).toFixed(2)+'%';
- function setRound(k){lastI=-1;buildLog(k);curFe=feOf(k);curPl=plants.find(q=>q>=curFe&&q<rend(k))||0;rs=rounds[k]===undefined?t0:st(k);re=rend(k);lastR=k;mqUi();$$('rs').value=k;$$('rn').textContent='R'+(k+1);
+ function setRound(k){lastI=-1;buildLog(k);curFe=feOf(k);curPl=plants.find(q=>q>=curFe&&q<rend(k))||0;rs=rounds[k]===undefined?t0:st(k);re=rend(k);lastR=k;mqUi();$$('rs').value=k;
   $$('tlb').innerHTML='<u></u>'+D.deaths.filter(d=>d.tick>=rs&&d.tick<re).map(d=>{const f=D.fr.get(D.T[idxOf(d.tick)])||[],a=f.find(r=>r.steamid===d.attacker_steamid);return`<s style="left:${pcr(d.tick)};background:${a?col(a.team_num):'#ff5d5d'}" data-t="${d.tick-160}" title="${esc(d.attacker_name||'?')} → ${esc(d.user_name||'?')}"></s>`}).join('')+anno.notes.filter(n=>rIdx(n.t)===k).map(n=>`<b style="left:${pcr(n.t)};background:${n.c||'#ffd43b'}" data-t="${n.t}" data-n="${n.id}" title="${esc(n.title||n.text||'')}"></b>`).join('')+'<i id="cur"></i><em id="curt"></em>'}
- function draw(){
+ const zm={k:1,x:0,y:0};
+ function draw(){c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,S,S);c.save();c.translate(zm.x,zm.y);c.scale(zm.k,zm.k);try{drawScene()}finally{c.restore()}}
+ function drawScene(){
   c.clearRect(0,0,S,S);
   const ri0=curR();if(ri0!==lastR)setRound(ri0);
   if(!buy&&!D.board&&D.T[Math.floor(i)]<rs)i=idxOf(rs);
@@ -127,12 +138,10 @@ function demoPlay(D,el,p){
   if(a!==lastI){lastI=a;
    $$('tt').textContent=fmt(Math.max(0,(t-rs)/64))+' / '+fmt((re-rs)/64);
    let ck,lb;if(t<curFe){ck=buy?fmt((curFe-t)/64):'1:55';lb='COMPRAS'}else if(curPl&&t>=curPl){ck=fmt(Math.max(0,40-(t-curPl)/64));lb='BOMBA'}else{ck=fmt(Math.max(0,115-(t-curFe)/64));lb='RONDA'}
-   $$('tm').textContent=ck;{const ctt=$$('curt');if(ctt)ctt.textContent=ck}$$('rn').textContent=lb+' · R'+(lastR+1);renderLive(t);renderLog(t);
+   $$('tm').textContent=ck;{const ctt=$$('curt');if(ctt)ctt.textContent=ck}{const aT=A.filter(r=>r.team_num==2&&r.health>0).length,aC=A.filter(r=>r.team_num==3&&r.health>0).length;$$('rn').innerHTML=lb+' · <span style="color:#f08c00">'+aT+'T</span> vs <span style="color:#4dabf7">'+aC+'CT</span>'}renderLive(t);renderLog(t);
    let s3=0,s2=0;for(const e of D.ends)if(e.tick<=t){if(e.w==='CT')s3++;else if(e.w==='T')s2++}
    $$('sc3').textContent=s3;$$('sc2').textContent=s2;
    const ks=D.deaths.filter(d=>d.tick<=t),kd={},dd={};for(const d of ks){kd[d.attacker_steamid]=(kd[d.attacker_steamid]||0)+1;dd[d.user_steamid]=(dd[d.user_steamid]||0)+1}
-   const rk=ks.filter(d=>d.tick>=rs);$$('kn').textContent=rk.length;
-   $$('kf').innerHTML=rk.slice(-6).reverse().map(d=>`<div><b>${esc(d.attacker_name||'?')}</b> <span class="mut">${esc(d.weapon||'')}${d.headshot?' ★':''}</span> ${esc(d.user_name||'?')}</div>`).join('')||'<div class="mut">Sem kills nesta ronda</div>';
    for(const tn of [3,2])$$('pl'+tn).innerHTML=A.filter(r=>r.team_num==tn).map(r=>{const h=Math.max(0,r.health||0),g=gear(r);return`<div class="pc${h?'':' dead'}" style="--c:${col(tn)}"><div class="nm">${esc(r.name||'')}</div><span class="hp">${h}</span><div class="hb"><i style="width:${h}%"></i></div>${h?`<div class="gr"><span>${esc(g.w)}</span><b>$${r.balance??''}</b></div><div class="gr"><span>${g.u}</span><span>${r.armor_value>0?'🛡'+r.armor_value+(r.has_helmet?'⛑':''):''}${r.has_defuser?' 🔧':''}${g.c4?' 💣':''}</span></div>`:''}<div class="kd">⌖ ${kd[r.steamid]||0} · ☠ ${dd[r.steamid]||0}</div></div>`}).join('');
   }
  }
@@ -149,15 +158,35 @@ function demoPlay(D,el,p){
   function renderLive(t){return;const L=anno.notes.filter(n=>D.board||(t>=n.t&&t<n.t+640));const h=L.map(n=>`<div class="lnc" data-id="${n.id}" style="--c:${n.c||'#ffd43b'}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><span>${esc(nt(n))}</span></div>`).join('');if(h!==lastLn){lastLn=h;$$('ln').innerHTML=h}}
  function refresh(){$$('nc').textContent=anno.notes.length;renderNotes();lastI=-1;if(lastR>=0)setRound(lastR)}
   let lgList=[],lgHtml='';
-  function buildLog(k){const s0=rounds[k]===undefined?t0:rounds[k],e0=rend(k),L=[],cl=r=>r?col(r.team):'#c3c9d6';
-   for(const d of D.deaths){const dt=+d.tick;if(dt<s0||dt>=e0)continue;const a=rowAt(d.attacker_steamid,dt),v=rowAt(d.user_steamid,dt);
-    L.push({t:dt,h:`<span style="color:${cl(a)}">${esc(d.attacker_name||'?')}</span> ☠ <span style="color:${cl(v)}">${esc(d.user_name||'?')}</span> <span class="mut">${esc(d.weapon||'')}${d.headshot?' ★':''}</span>`})}
-   for(const[arr,h]of[[D.plants,'💣 Bomba plantada'],[D.defuses,'🔧 Bomba desarmada'],[D.explodes,'💥 Bomba explodiu']])for(const t of arr||[])if(t>=s0&&t<e0)L.push({t,h});
-   for(const e of D.ends)if(e.tick>=s0&&e.tick<e0)L.push({t:e.tick,h:'🏁 Ronda para '+(e.w==='CT'?'CT':e.w==='T'?'T':'—')});
-   L.sort((a,b)=>a.t-b.t);lgList=L;lgHtml=''}
-  function renderLog(t){const rt=tk=>tk<curFe?'compras':fmt(Math.max(0,115-(tk-curFe)/64)),h=lgList.filter(x=>x.t<=t).map(x=>`<div data-t="${x.t}"><time>${rt(x.t)}</time> ${x.h}</div>`).join('')||'<div class="mut">Sem eventos ainda</div>';
-   if(h!==lgHtml){lgHtml=h;const g=$$('lg');g.innerHTML='<div class="kh">Logs · R'+(lastR+1)+'</div>'+h;g.scrollTop=g.scrollHeight}}
-  $$('lg').onclick=e=>{const r=e.target.closest('[data-t]');if(r){i=idxOf(+r.dataset.t-160);play=false;$$('pp').textContent='▶'}};
+  const WN={hegrenade:'HE',smokegrenade:'Smoke',flashbang:'Flash',molotov:'Molotov',incgrenade:'Incendiária',inferno:'fogo',decoy:'Decoy',c4:'C4'},HG=['','cabeça','peito','barriga','braço esq.','braço dir.','perna esq.','perna dir.'];
+  const wname=w=>{w=String(w||'').replace(/^weapon_/,'');return esc(WN[w]||w)};
+  const NI={smoke:'☁',molotov:'🔥',flash:'⚡',he:'💥'},NN={smoke:'Smoke',molotov:'Molotov',flash:'Flash',he:'HE'};
+  function buildLog(k){const s0=rounds[k]===undefined?t0:rounds[k],e0=rend(k),L=[],inR=t=>t>=s0&&t<e0,tmOf=(sid,t)=>{const r=rowAt(sid,t);return r?r.team:0},
+   N=(n,sid,t)=>{const r=rowAt(sid,t);return`<span style="color:${r?col(r.team):'#c3c9d6'}">${esc(n||'?')}</span>`},has=x=>x&&String(x)!=='0',mu=x=>`<span class="mut">${x}</span>`;
+   const f=fes.find(q=>q>=s0&&q<e0);if(f!==undefined)L.push({t:f,c:'end',h:'▶ Fim do buytime — a ronda começou'});
+   for(const b of D.buys||[]){const t=+b.tick;if(!inR(t))continue;const w=b.weapon||b.item||b.name;if(!w)continue;L.push({t,c:'buy',h:`🛒 ${N(b.user_name,b.user_steamid,t)} comprou <b>${wname(w)}</b>`})}
+   if((D.thr||[]).length){for(const g of D.thr){const t=+g.tick;if(inR(t))L.push({t,c:'nade',h:`🧨 ${N(g.user_name,g.user_steamid,t)} lançou <b>${wname(g.weapon)}</b>`})}}
+   else for(const u of D.util||[])if(inR(u.t))L.push({t:u.t,c:'nade',h:`${NI[u.k]||'🧨'} ${N(u.n,u.s,u.t)} — ${NN[u.k]||u.k} detonou`});
+   for(const b of D.blind||[]){const t=+b.tick,du=+b.blind_duration;if(!inR(t)||!(du>=.5))continue;const tf=has(b.attacker_steamid)&&tmOf(b.attacker_steamid,t)===tmOf(b.user_steamid,t);
+    L.push({t,c:'nade',h:`⚡ ${has(b.attacker_steamid)?N(b.attacker_name,b.attacker_steamid,t):'?'} cegou ${N(b.user_name,b.user_steamid,t)} ${mu(du.toFixed(1)+' s')}${tf?' ⚠ colega':''}`})}
+   for(const[arr,txt]of[[D.bpl,'começou a plantar a bomba'],[D.bdr,'largou a bomba'],[D.bpk,'apanhou a bomba']])for(const b of arr||[]){const t=+b.tick;if(inR(t))L.push({t,c:'bomb',h:`💣 ${N(b.user_name,b.user_steamid,t)} ${txt}`})}
+   for(const b of D.bdf||[]){const t=+b.tick;if(inR(t))L.push({t,c:'bomb',h:`🔧 ${N(b.user_name,b.user_steamid,t)} começou a desarmar${b.haskit?' (com kit)':''}`})}
+   for(const h of D.hurt||[]){const t=+h.tick,dm=+h.dmg_health;if(!inR(t)||!(dm>0))continue;const A_=has(h.attacker_steamid),tf=A_&&h.attacker_steamid!==h.user_steamid&&tmOf(h.attacker_steamid,t)===tmOf(h.user_steamid,t),ar=+h.dmg_armor,hg=HG[+h.hitgroup]||'';
+    L.push({t,c:'hurt',h:`${A_?N(h.attacker_name,h.attacker_steamid,t)+' 💢 ':''}${N(h.user_name,h.user_steamid,t)} <b style="color:#ff8787">−${dm}</b> ${mu((ar>0?'colete −'+ar+' · ':'')+wname(h.weapon||'queda')+(hg?' · '+hg:'')+(isFinite(+h.health)?' · vida '+h.health:''))}${tf?' ⚠ fogo amigo':''}`})}
+   for(const d of D.deaths){const t=+d.tick;if(!inR(t))continue;const self=!has(d.attacker_steamid)||d.attacker_steamid===d.user_steamid;
+    const tg=[];if(d.headshot)tg.push('★ cabeça');if(+d.penetrated>0)tg.push('através de parede');if(d.thrusmoke)tg.push('através de smoke');if(d.noscope)tg.push('sem scope');if(d.attackerblind)tg.push('atacante cego');if(+d.distance>0)tg.push(Math.round(+d.distance)+' m');
+    const as=d.assister_name?` · assist: ${N(d.assister_name,d.assister_steamid,t)}${d.assistedflash?' (flash)':''}`:'';
+    L.push({t,c:'kill',h:self?`☠ ${N(d.user_name,d.user_steamid,t)} morreu ${mu(wname(d.weapon||'queda'))}`:`${N(d.attacker_name,d.attacker_steamid,t)} ☠ ${N(d.user_name,d.user_steamid,t)} ${mu(wname(d.weapon)+(tg.length?' · '+tg.join(' · '):''))}${as}`})}
+   for(const b of D.plantR||[]){const t=+b.tick;if(inR(t))L.push({t,c:'bomb',h:`💣 <b>${N(b.user_name,b.user_steamid,t)} plantou a bomba</b>`})}
+   for(const b of D.defR||[]){const t=+b.tick;if(inR(t))L.push({t,c:'bomb',h:`🔧 <b>${N(b.user_name,b.user_steamid,t)} desarmou a bomba</b>`})}
+   for(const t of D.explodes||[])if(inR(t))L.push({t,c:'bomb',h:'💥 <b>A bomba explodiu</b>'});
+   for(const e of D.ends)if(e.tick>=s0&&e.tick<e0)L.push({t:e.tick,c:'end',h:'🏁 <b>Ronda para '+(e.w==='CT'?'CT':e.w==='T'?'T':'—')+'</b>'});
+   L.forEach((x,n)=>x.o=n);L.sort((a,b)=>a.t-b.t||a.o-b.o);lgList=L;lgHtml=''}
+  function renderLog(t){const rt=tk=>tk<curFe?'−'+fmt((curFe-tk)/64):fmt(Math.max(0,115-(tk-curFe)/64)),h=lgList.filter(x=>x.t<=t).map(x=>`<div data-t="${x.t}" data-c="${x.c}"><time>${rt(x.t)}</time> ${x.h}</div>`).join('')||'<div class="mut">Sem eventos ainda</div>';
+   if(h!==lgHtml){lgHtml=h;const g=$$('lgl'),near=g.scrollHeight-g.scrollTop-g.clientHeight<40;g.innerHTML=h;if(near)g.scrollTop=g.scrollHeight}$$('lgt').textContent='Logs · R'+(lastR+1)}
+  const LF=['kill','hurt','nade','bomb','buy'];let lgOff=new Set();try{lgOff=new Set(JSON.parse(localStorage.getItem('ugr_lgoff')||'[]'))}catch(e){}
+  const lgApply=()=>{LF.forEach(c=>$$('lg').classList.toggle('off-'+c,lgOff.has(c)));el.querySelectorAll('#lg [data-f]').forEach(b=>b.classList.toggle('on',!lgOff.has(b.dataset.f)))};lgApply();
+  $$('lg').onclick=e=>{const b=e.target.closest('[data-f]');if(b){const c=b.dataset.f;lgOff.has(c)?lgOff.delete(c):lgOff.add(c);try{localStorage.setItem('ugr_lgoff',JSON.stringify([...lgOff]))}catch(x){}lgApply();return}const r=e.target.closest('[data-t]');if(r){i=idxOf(+r.dataset.t-160);play=false;$$('pp').textContent='▶'}};
   function renderViewer(){const v=$$('nv'),n=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(mqPrev&&!(n&&n.mock)){const q=mqPrev;mqPrev=null;if(q.mock)anno.mocks[q.key]=q.mock;else delete anno.mocks[q.key];save();mqSet(q.on,false)}
   if(!n){v.style.display='none';v.innerHTML='';return}v.style.display='block';v.style.setProperty('--c',n.c||'#ffd43b');v.innerHTML='<b>'+esc(nt(n))+'</b>'+(n.text?'<div>'+esc(n.text)+'</div>':'')}
   function renderNotes(){renderViewer();const L=[...anno.notes].sort((a,b)=>a.t-b.t);$$('nl').innerHTML=L.length?L.map(n=>`<div class="mk${n.id===selN?' sel':''}" data-t="${n.t}" data-id="${n.id}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><em class="dt" style="background:${n.c||'#ffd43b'}"></em><time>R${rIdx(n.t)+1} ${fmt(Math.max(0,n.t-rounds[rIdx(n.t)])/64)}</time><b>${esc(nt(n))}</b></div>`).join(''):'<div class="mut" style="padding:6px">Sem notas.</div>'}
@@ -172,7 +201,7 @@ function demoPlay(D,el,p){
    else{c.fillStyle='rgba(15,18,26,.75)';c.strokeStyle=U[1];c.lineWidth=2;c.beginPath();c.arc(x,y,17,0,7);c.fill();c.stroke()}
    c.font='22px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.fillText(U[0],x,y+1)}
   c.restore()}
- const pt=e=>{const b=cv.getBoundingClientRect();return inv((e.clientX-b.left)/b.width*S,(e.clientY-b.top)/b.height*S)};
+ const pt=e=>{const b=cv.getBoundingClientRect();return inv(((e.clientX-b.left)/b.width*S-zm.x)/zm.k,((e.clientY-b.top)/b.height*S-zm.y)/zm.k)};
  const dist=(s,w)=>{const pp=P(w[0],w[1]),pq=s.pts.map(v=>P(v[0],v[1]));
   const seg=(a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy||1;let u=((pp[0]-a[0])*dx+(pp[1]-a[1])*dy)/l;u=Math.max(0,Math.min(1,u));return Math.hypot(pp[0]-a[0]-u*dx,pp[1]-a[1]-u*dy)};
   if(s.type==='circle')return Math.abs(Math.hypot(pp[0]-pq[0][0],pp[1]-pq[0][1])-Math.hypot(pq[1][0]-pq[0][0],pq[1][1]-pq[0][1]));
@@ -180,14 +209,14 @@ function demoPlay(D,el,p){
   let m=1e9;for(let n=1;n<pq.length;n++)m=Math.min(m,seg(pq[n-1],pq[n]));return m};
  const erase=w=>{let best=null,bd=24;for(const s of anno.shapes)if(vis(s)){const d=dist(s,w);if(d<bd){bd=d;best=s}}if(best){anno.shapes=anno.shapes.filter(x=>x!==best);save();refresh()}};
  cv.style.touchAction='none';
- cv.onpointerdown=e=>{if(mq.on&&mqDown(e))return;if(!tool||tool==='m-kill')return;const w=pt(e),t=D.T[Math.floor(i)];
+ cv.onpointerdown=e=>{if(mq.on&&mqDown(e))return;if(e.button===1||(!tool&&zm.k>1)){e.preventDefault();pan={x:e.clientX,y:e.clientY,ox:zm.x,oy:zm.y};try{cv.setPointerCapture(e.pointerId)}catch(x){}return}if(!tool||tool==='m-kill')return;const w=pt(e),t=D.T[Math.floor(i)];
   if(tool==='erase')return erase(w);
   if(tool.startsWith('u-')){const m=mqCur();if(!m||!mq.on)return;(m.ut||(m.ut=[])).push({id:Date.now(),k:tool.slice(2),x:w[0],y:w[1]});save();return}
   if(tool==='text'){const x=prompt('Texto:');if(x){anno.shapes.push({id:Date.now(),t,d:dur(),type:'text',c:color,w:3,pts:[w],text:x});save();refresh()}return}
   play=false;$$('pp').textContent='▶';try{cv.setPointerCapture(e.pointerId)}catch(x){}
   cur={id:Date.now(),t,d:dur(),type:tool,c:color,w:4,pts:tool==='pen'?[w]:[w,w]}};
- cv.onpointermove=e=>{if(mq.drag){const w=pt(e);mq.drag.x=w[0];mq.drag.y=w[1];return}if(!cur)return;const w=pt(e);if(cur.type==='pen')cur.pts.push(w);else cur.pts[1]=w};
- cv.onpointerup=()=>{if(mq.drag){mq.drag=null;save();return}if(!cur)return;const q=cur.pts;if(q.length>1&&(cur.type==='pen'||q[0][0]!==q[1][0]||q[0][1]!==q[1][1])){anno.shapes.push(cur);save();refresh()}cur=null};
+ cv.onpointermove=e=>{if(pan){const b=cv.getBoundingClientRect();zm.x=pan.ox+(e.clientX-pan.x)/b.width*S;zm.y=pan.oy+(e.clientY-pan.y)/b.height*S;zmClamp();return}if(mq.drag){const w=pt(e);mq.drag.x=w[0];mq.drag.y=w[1];return}if(!cur)return;const w=pt(e);if(cur.type==='pen')cur.pts.push(w);else cur.pts[1]=w};
+ cv.onpointerup=()=>{if(pan){pan=null;return}if(mq.drag){mq.drag=null;save();return}if(!cur)return;const q=cur.pts;if(q.length>1&&(cur.type==='pen'||q[0][0]!==q[1][0]||q[0][1]!==q[1][1])){anno.shapes.push(cur);save();refresh()}cur=null};
  el.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;el.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('on',x===b));cv.style.cursor=tool?'crosshair':'default'});
  $$('cols').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;color=b.dataset.c;$$('cc').value=color;el.querySelectorAll('#cols .sw').forEach(x=>x.classList.toggle('on',x===b))};
  const ts=$$('ts');if(ts)ts.onchange=e=>{showS=e.target.checked;try{localStorage.setItem('ugr_shots',showS?'1':'0')}catch(x){}};
@@ -246,6 +275,12 @@ function demoPlay(D,el,p){
   $$('mqa').onclick=()=>mqAdd(2);$$('mqb').onclick=()=>mqAdd(3);
   $$('mqr').onclick=()=>{if(confirm('Repor a maquete? Perdes as posições e as mortes atuais.'))mqSnap()};
   $$('mkp').onclick=e=>{const k=e.target.dataset.k,m=mqCur();if(k!==undefined&&m){m.kl.splice(+k,1);save();mqUi()}};
+  let pan=null;
+  const zmUi=()=>{const b=$$('zr');if(b)b.textContent=zm.k.toFixed(1).replace(/\.0$/,'')+'×';cv.style.cursor=zm.k>1?'grab':''};
+  const zmClamp=()=>{if(zm.k<=1){zm.k=1;zm.x=zm.y=0}else{zm.x=Math.min(0,Math.max(S-S*zm.k,zm.x));zm.y=Math.min(0,Math.max(S-S*zm.k,zm.y))}};
+  const zmAt=(px,py,f)=>{const k2=Math.min(8,Math.max(1,zm.k*f));zm.x=px-(px-zm.x)*(k2/zm.k);zm.y=py-(py-zm.y)*(k2/zm.k);zm.k=k2;zmClamp();zmUi()};
+  cv.addEventListener('wheel',e=>{e.preventDefault();const b=cv.getBoundingClientRect();zmAt((e.clientX-b.left)/b.width*S,(e.clientY-b.top)/b.height*S,e.deltaY<0?1.2:1/1.2)},{passive:false});
+  $$('zi').onclick=()=>zmAt(S/2,S/2,1.4);$$('zo').onclick=()=>zmAt(S/2,S/2,1/1.4);$$('zr').onclick=()=>{zm.k=1;zmClamp();zmUi()};
   cv.oncontextmenu=e=>{if(!mq.on)return;const m=mqCur(),u=m&&mqHitU(pt(e));if(u){e.preventDefault();m.ut=m.ut.filter(x=>x!==u);save()}};
   cv.ondblclick=e=>{if(!mq.on)return;const h=mqHit(pt(e));if(h){const n=prompt('Nome do jogador:',h.n);if(n!==null){h.n=n.trim()||h.n;save();mqUi()}}};
   const teamOf=u=>{if(u.tm===undefined){const r=(D.fr.get(D.T[idxOf(u.t)])||[]).find(x=>x.steamid===u.s);u.tm=r?r.team_num:0}return u.tm};
