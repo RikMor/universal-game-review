@@ -113,7 +113,17 @@ button.g.sw::after{content:"";position:absolute;inset:5px;border-radius:50%;back
 .colR .pl{flex:0 1 auto;max-height:50%}
 
 /* cartas dos jogadores */
-.pc{flex:none;background:rgba(20,25,38,.96);border:1px solid var(--ln);border-left:3px solid var(--c);border-radius:10px;padding:6px 10px}
+.pc{flex:none;display:flex;background:rgba(20,25,38,.96);border:1px solid var(--ln);border-radius:10px;overflow:hidden;position:relative}
+.pc .pcb{flex:1;min-width:0;padding:6px 10px}
+.pc .gp{flex:none;width:24px;display:flex;align-items:center;justify-content:center;background:var(--c);color:#0b0d12;font-size:14px;font-weight:800;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.pc .gp:active{cursor:grabbing}
+.pc.drg{opacity:.6;outline:2px dashed var(--c)}
+.pc.ov::before,.pc.ov::after{content:"";position:absolute;left:0;right:0;height:3px;background:#fff;z-index:2}
+.pc.ov::before{top:0}.pc.ov::after{display:none}
+.pc.ovb::before{display:none}.pc.ovb::after{display:block;bottom:0}
+.nd .kh{display:flex;justify-content:space-between;align-items:center}
+.nd .ndx{cursor:pointer;text-decoration:none;color:var(--mut);padding:0 4px}
+.nd .ndx:hover{color:#fff}
 .pc.dead{opacity:.45}
 .pc .r1{display:flex;align-items:baseline;gap:8px}
 .pc .nm{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

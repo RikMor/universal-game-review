@@ -57,7 +57,7 @@ function demoPlay(D,el,p){
  const col=t=>t==2?'#f08c00':'#4dabf7';
  const idxOf=t=>{let k=D.T.findIndex(x=>x>=t);return k<0?N-1:Math.max(0,k)};
  const rend=k=>rounds[k+1]||t1;
- const fes=D.fe||[],plants=D.plants||[];let buy=true,showU=true,showS=true;try{buy=localStorage.getItem('ugr_skipbuy')!=='1';showU=localStorage.getItem('ugr_util')!=='0';showS=localStorage.getItem('ugr_shots')!=='0'}catch(e){}
+ const fes=D.fe||[],plants=D.plants||[];let buy=true,showU=true,showS=true,showN=true;try{buy=localStorage.getItem('ugr_skipbuy')!=='1';showU=localStorage.getItem('ugr_util')!=='0';showS=localStorage.getItem('ugr_shots')!=='0';showN=localStorage.getItem('ugr_names')!=='0'}catch(e){}
  const feOf=k=>{const x=fes.find(q=>q>=rounds[k]&&q<rend(k));return x??rounds[k]+960};
  const st=k=>buy?rounds[k]:feOf(k);let curFe=0,curPl=0;
  const GR={'Smoke Grenade':'☁','Flashbang':'⚡','High Explosive Grenade':'💥','Molotov':'🔥','Incendiary Grenade':'🔥','Decoy Grenade':'◎'};
@@ -88,7 +88,7 @@ function demoPlay(D,el,p){
     <div class="rowc"><button class="pri" id="nt">${IC.plus}Criar nota</button><button class="g solid" id="nvw">${IC.list}Ver notas <span class="cnt" id="nc">0</span></button></div>
    </div>
    <div class="sec"><div class="ph">Vista</div>
-    <div class="rowc"><div class="grp" id="zmg"><button class="g ic" id="zo" title="Menos zoom (ou roda do rato)">${IC.zout}</button><button class="g" id="zr" title="Repor zoom">1×</button><button class="g ic" id="zi" title="Mais zoom (ou roda do rato)">${IC.zin}</button></div>${D.board?'':`<label class="g chk" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}>Utilidades</label><label class="g chk" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}>Tiros</label>`}<button class="g solid ic" id="fs" title="Ecrã inteiro">${IC.full}</button></div>
+    <div class="rowc"><div class="grp" id="zmg"><button class="g ic" id="zo" title="Menos zoom (ou roda do rato)">${IC.zout}</button><button class="g" id="zr" title="Repor zoom">1×</button><button class="g ic" id="zi" title="Mais zoom (ou roda do rato)">${IC.zin}</button></div><label class="g chk" title="Mostrar os nomes dos jogadores no mapa"><input type="checkbox" id="nn"${showN?' checked':''}>Nomes</label>${D.board?'':`<label class="g chk" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}>Utilidades</label><label class="g chk" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}>Tiros</label>`}<button class="g solid ic" id="fs" title="Ecrã inteiro">${IC.full}</button></div>
    </div>
   </div>
  </div>
@@ -96,7 +96,7 @@ function demoPlay(D,el,p){
  <div class="nbox">
   <div class="pn mkp" id="mkp"></div>
   <div class="pn nv" id="nv"></div>
-  <div class="pn nd pop" id="nd"><div class="kh">Criar nota</div><input type="text" id="nti" placeholder="Título"><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><label class="opt nmq"><input type="checkbox" id="nmq" checked>Anexar a maquete desta ronda</label><label class="opt" id="nshl"><input type="checkbox" id="nsh" checked><span id="nshs">Anexar os desenhos desta ronda</span></label><button class="pri wide" id="na">Adicionar nota</button></div>
+  <div class="pn nd pop" id="nd"><div class="kh">Criar nota<u class="x ndx" id="ndx" title="Fechar">✕</u></div><input type="text" id="nti" placeholder="Título"><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><label class="opt nmq"><input type="checkbox" id="nmq" checked>Anexar a maquete desta ronda</label><label class="opt" id="nshl"><input type="checkbox" id="nsh" checked><span id="nshs">Anexar os desenhos desta ronda</span></label><button class="pri wide" id="na">Adicionar nota</button></div>
   <div class="pn nd pop" id="nlp"><div class="kh">Notas</div><div id="nl"></div></div>
   <div id="ln" style="display:none"></div>
  </div>
@@ -155,7 +155,7 @@ function demoPlay(D,el,p){
   const im=floor==='low'&&imgs.low?imgs.low:imgs.up;
   if(R&&im&&im.complete)c.drawImage(im,0,0,S,S);else if(!R){if(!bg)bg=mkBg();c.drawImage(bg,0,0)}
   if(showU&&D.util){const tk=D.T[a];for(const u of D.util)if(tk>=u.t&&tk<u.e)drawUtil(u,tk)}
-  const bm=new Map(B.map(r=>[r.steamid,r])),tkn=D.T[a]+f*((D.T[Math.min(a+1,N-1)]||D.T[a])-D.T[a]);
+  const bm=new Map(B.map(r=>[r.steamid,r])),nums=numMap(A),tkn=D.T[a]+f*((D.T[Math.min(a+1,N-1)]||D.T[a])-D.T[a]);
   drawSkulls(D.T[a]);
   for(const r of A){const q=bm.get(r.steamid)||r,X=r.X+(q.X-r.X)*f,Y=r.Y+(q.Y-r.Y)*f,[x,y]=P(X,Y),dead=!(r.health>0);
    if(dead)continue;
@@ -163,7 +163,8 @@ function demoPlay(D,el,p){
    c.globalAlpha=mq.on?.18:dead?.4:onF?1:.3;const cl=dead?'#8b93a7':col(r.team_num);
    if(r.yaw!=null&&!dead){const g=r.yaw*Math.PI/180;c.strokeStyle=cl;c.lineWidth=3;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(g)*28,y-Math.sin(g)*28);c.stroke()}
    c.fillStyle=cl;c.strokeStyle='#0b0d12';c.lineWidth=3;c.beginPath();c.arc(x,y,10,0,7);c.stroke();c.fill();
-   c.font='600 14px sans-serif';c.textAlign='center';c.fillStyle='#fff';c.strokeText(r.name||'',x,y-16);c.fillText(r.name||'',x,y-16);c.globalAlpha=1}
+   c.textAlign='center';c.fillStyle='#fff';{const nu=nums.get(r.steamid);if(nu!==undefined){c.font='700 13px sans-serif';c.textBaseline='middle';c.lineWidth=3;c.strokeText(nu,x,y+1);c.fillText(nu,x,y+1)}}
+   c.textBaseline='alphabetic';if(showN){c.font='600 14px sans-serif';c.lineWidth=3;c.strokeText(r.name||'',x,y-16);c.fillText(r.name||'',x,y-16)}c.globalAlpha=1}
   if(showS&&!mq.on)drawShots(tkn);
   for(const s of anno.shapes)if(vis(s))drawShape(s);{const sn=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(sn&&sn.shapes)for(const s of sn.shapes)drawShape(s)}if(cur)drawShape(cur);mqDraw();
   const t=D.T[a];
@@ -175,11 +176,14 @@ function demoPlay(D,el,p){
    let s3=0,s2=0;for(const e of D.ends)if(e.tick<=t){if(e.w==='CT')s3++;else if(e.w==='T')s2++}
    $$('sc3').textContent=s3;$$('sc2').textContent=s2;
    const ks=D.deaths.filter(d=>d.tick<=t),kd={},dd={};for(const d of ks){kd[d.attacker_steamid]=(kd[d.attacker_steamid]||0)+1;dd[d.user_steamid]=(dd[d.user_steamid]||0)+1}
-   for(const tn of [3,2])$$('pl'+tn).innerHTML=A.filter(r=>r.team_num==tn).map(r=>{const h=Math.max(0,r.health||0),g=gear(r);return`<div class="pc${h?'':' dead'}" style="--c:${col(tn)}"><div class="r1"><span class="nm">${esc(r.name||'')}</span><span class="kd">⌖${kd[r.steamid]||0} ☠${dd[r.steamid]||0}</span><span class="hp">${h}</span></div><div class="hb"><i style="width:${h}%"></i></div>${h?`<div class="gr"><span>${esc(g.w)}</span><b>$${r.balance??''}</b></div><div class="gr"><span>${g.u}</span><span>${r.armor_value>0?'🛡'+r.armor_value+(r.has_helmet?'⛑':''):''}${r.has_defuser?' 🔧':''}${g.c4?' 💣':''}</span></div>`:''}</div>`}).join('');
+   if(!plDrag)for(const tn of [3,2])$$('pl'+tn).innerHTML=teamSorted(A,tn).map((r,n)=>{const h=Math.max(0,r.health||0),g=gear(r);return`<div class="pc${h?'':' dead'}" data-s="${esc(String(r.steamid))}" data-tn="${tn}" style="--c:${col(tn)}"><b class="gp" title="Arrasta para mudar a posição (e o número no mapa)">${NB[tn]+Math.min(n,4)}</b><div class="pcb"><div class="r1"><span class="nm">${esc(r.name||'')}</span><span class="kd">⌖${kd[r.steamid]||0} ☠${dd[r.steamid]||0}</span><span class="hp">${h}</span></div><div class="hb"><i style="width:${h}%"></i></div>${h?`<div class="gr"><span>${esc(g.w)}</span><b>$${r.balance??''}</b></div><div class="gr"><span>${g.u}</span><span>${r.armor_value>0?'🛡'+r.armor_value+(r.has_helmet?'⛑':''):''}${r.has_defuser?' 🔧':''}${g.c4?' 💣':''}</span></div>`:''}</div></div>`}).join('');
   }
  }
  // ---- anotações e desenhos (guardados à parte: registo "<id>:anno") ----
- const AK=p.id+':anno'+(D.board?':'+D.map:'');let anno={shapes:[],notes:[],mocks:{}},tool='',color='#ffd43b',cur=null,sv=null;
+ const AK=p.id+':anno'+(D.board?':'+D.map:'');let anno={shapes:[],notes:[],mocks:{},pos:{}},tool='',color='#ffd43b',cur=null,sv=null;
+ const NB={2:0,3:5};let plDrag=false;
+ const teamSorted=(A,tn)=>{const ps=anno.pos||{};return A.map((r,n)=>({r,n})).filter(o=>o.r.team_num==tn).sort((a,b)=>(ps[a.r.steamid]??99)-(ps[b.r.steamid]??99)||a.n-b.n).map(o=>o.r)};
+ const numMap=A=>{const m=new Map();for(const tn of [2,3])teamSorted(A,tn).forEach((r,n)=>m.set(r.steamid,NB[tn]+Math.min(n,4)));return m};
  const inv=(x,y)=>R?[x*R.p[2]+R.p[0],R.p[1]-y*R.p[2]]:[(x-62)*sc+x0,y1-(y-62)*sc];
  const save=()=>{clearTimeout(sv);sv=setTimeout(()=>{try{put({id:AK,anno}).catch(()=>{})}catch(e){}},400)};
  const rIdx=t=>{let k=0;rounds.forEach((r,n)=>{if(r<=t)k=n});return k};
@@ -250,8 +254,9 @@ function demoPlay(D,el,p){
   cur={id:Date.now(),t,d:dur(),type:tool,c:color,w:4,pts:tool==='pen'?[w]:[w,w]}};
  cv.onpointermove=e=>{if(pan){const b=cv.getBoundingClientRect();zm.x=pan.ox+(e.clientX-pan.x)/b.width*S;zm.y=pan.oy+(e.clientY-pan.y)/b.height*S;zmClamp();return}if(mq.drag){const w=pt(e);mq.drag.x=w[0];mq.drag.y=w[1];return}if(!cur)return;const w=pt(e);if(cur.type==='pen')cur.pts.push(w);else cur.pts[1]=w};
  cv.onpointerup=()=>{if(pan){pan=null;return}if(mq.drag){mq.drag=null;save();return}if(!cur)return;const q=cur.pts;if(q.length>1&&(cur.type==='pen'||q[0][0]!==q[1][0]||q[0][1]!==q[1][1])){anno.shapes.push(cur);save();refresh()}cur=null};
- el.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;el.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('on',x===b));cv.style.cursor=tool?'crosshair':'default'});
+ el.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;el.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('on',x===b));cv.style.cursor=tool?'crosshair':'default';ndDis=false;noteAuto()});
  $$('cols').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;color=b.dataset.c;$$('cc').value=color;el.querySelectorAll('#cols .sw').forEach(x=>x.classList.toggle('on',x===b))};
+ const nn=$$('nn');if(nn)nn.onchange=e=>{showN=e.target.checked;try{localStorage.setItem('ugr_names',showN?'1':'0')}catch(x){}};
  const ts=$$('ts');if(ts)ts.onchange=e=>{showS=e.target.checked;try{localStorage.setItem('ugr_shots',showS?'1':'0')}catch(x){}};
  const uu=$$('uu');if(uu)uu.onchange=e=>{showU=e.target.checked;try{localStorage.setItem('ugr_util',showU?'1':'0')}catch(x){}};
  $$('cc').oninput=e=>{color=e.target.value;el.querySelectorAll('#cols .sw').forEach(x=>x.classList.remove('on'))};
@@ -268,12 +273,16 @@ function demoPlay(D,el,p){
   $$('ln').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.lnc');if(r){const id=+r.dataset.id;if(selN===id){selN=null;renderNotes();return}selN=id;if(!D.board){i=idxOf(noteT(selN));play=false;$$('pp').textContent='▶'}openNote(selN);renderNotes()}};
   $$('nv').onclick=()=>{selN=null;renderNotes()};
   const noteT=id=>{const n=anno.notes.find(x=>String(x.id)===String(id));return n?n.t:D.T[0]};
-  let mqPrev=null;
+  let mqPrev=null,ndAuto=false,ndDis=false;
+  // ao desenhar ou com a Maquete ligada, o painel "Criar nota" abre sozinho (como se estivesses a adicionar uma nota)
+  const isAct=()=>mq.on||['pen','line','arrow','circle','text'].includes(tool);
+  function noteAuto(){const nd=$$('nd');if(!nd)return;if(isAct()){if(!ndDis){ndAuto=true;bh();shUi();$$('nlp').classList.remove('open');nd.classList.add('open')}}else if(ndAuto){ndAuto=false;nd.classList.remove('open')}}
+  $$('ndx').onclick=()=>{ndDis=true;ndAuto=false;$$('nd').classList.remove('open')};
   function openNote(id){const n=anno.notes.find(x=>String(x.id)===String(id));if(!n||!n.mock)return;const key=D.board?'b':String(rIdx(n.t));if(!mqPrev)mqPrev={on:mq.on,key,mock:anno.mocks&&anno.mocks[key]?JSON.parse(JSON.stringify(anno.mocks[key])):null};(anno.mocks||(anno.mocks={}))[key]=JSON.parse(JSON.stringify(n.mock));save();mqSet(true,false)}
-  const popOut=e=>{if(!document.body.contains(stg)){document.removeEventListener('pointerdown',popOut);return}if(e.target.closest('.pop,#nt,#nvw'))return;$$('nd').classList.remove('open');$$('nlp').classList.remove('open')};document.addEventListener('pointerdown',popOut);
-  $$('nt').onclick=()=>{bh();shUi();$$('nlp').classList.remove('open');$$('nd').classList.toggle('open')};
+  const popOut=e=>{if(!document.body.contains(stg)){document.removeEventListener('pointerdown',popOut);return}if(e.target.closest('.pop,#nt,#nvw'))return;if(!(ndAuto&&isAct()))$$('nd').classList.remove('open');$$('nlp').classList.remove('open')};document.addEventListener('pointerdown',popOut);
+  $$('nt').onclick=()=>{ndAuto=false;bh();shUi();$$('nlp').classList.remove('open');$$('nd').classList.toggle('open')};
   $$('nvw').onclick=()=>{bh();$$('nd').classList.remove('open');$$('nlp').classList.toggle('open')};
- try{tx('readonly',s=>s.get(AK)).then(r=>{if(r&&r.anno){anno=r.anno;anno.shapes=anno.shapes||[];anno.notes=anno.notes||[];anno.mocks=anno.mocks||{};refresh();mqUi()}}).catch(()=>{})}catch(e){}
+ try{tx('readonly',s=>s.get(AK)).then(r=>{if(r&&r.anno){anno=r.anno;anno.shapes=anno.shapes||[];anno.notes=anno.notes||[];anno.mocks=anno.mocks||{};anno.pos=anno.pos||{};refresh();mqUi()}}).catch(()=>{})}catch(e){}
 
   // ---- maquete: jogadores arrastáveis + quem mata quem (guardada em anno.mocks, por ronda; no quadro, por mapa) ----
   const mq={on:false,pick:null,drag:null};
@@ -282,7 +291,7 @@ function demoPlay(D,el,p){
   function mqSnap(){let tk;
    if(D.board){tk=[];for(const[tm,px]of[[2,70],[3,954]])for(let n=0;n<5;n++){const[x,y]=inv(px,300+n*95);tk.push({id:tm*100+n,tm,n:(tm==2?'T':'CT')+(n+1),x,y})}}
    else{const a=Math.floor(i),f=i-a,A=D.fr.get(D.T[a])||[],B=D.fr.get(D.T[Math.min(a+1,N-1)])||A,bm=new Map(B.map(r=>[r.steamid,r]));
-    tk=A.filter(r=>r.health>0&&(r.team_num==2||r.team_num==3)).map((r,n)=>{const q=bm.get(r.steamid)||r;return{id:n+1,tm:r.team_num,n:r.name||'',x:r.X+(q.X-r.X)*f,y:r.Y+(q.Y-r.Y)*f}})}
+    tk=A.filter(r=>r.health>0&&(r.team_num==2||r.team_num==3)).map((r,n)=>{const q=bm.get(r.steamid)||r;return{id:n+1,tm:r.team_num,n:r.name||'',s:r.steamid,x:r.X+(q.X-r.X)*f,y:r.Y+(q.Y-r.Y)*f}})}
    (anno.mocks||(anno.mocks={}))[mqKey()]={tk,kl:[],ut:[]};save();mqUi()}
   function mqAdd(tm){if(!mqCur())mqSnap();const m=mqCur(),k=m.tk.length%7,[x,y]=inv(512+k*34,512+k*34);m.tk.push({id:Math.max(0,...m.tk.map(t=>t.id))+1,tm,n:(tm==2?'T':'CT')+(m.tk.filter(t=>t.tm===tm).length+1),x,y});save();mqUi()}
   const mqHit=w=>{const m=mqCur();if(!m)return null;const[px,py]=P(w[0],w[1]);let b=null,bd=22;for(const t of m.tk){const[x,y]=P(t.x,t.y),d=Math.hypot(x-px,y-py);if(d<bd){bd=d;b=t}}return b};
@@ -301,17 +310,28 @@ function demoPlay(D,el,p){
     c.strokeStyle=c.fillStyle='#ff4d4d';c.lineWidth=4;c.setLineDash([10,6]);c.beginPath();c.moveTo(x1+Math.cos(g)*16,y1+Math.sin(g)*16);c.lineTo(ex,ey);c.stroke();c.setLineDash([]);
     c.beginPath();c.moveTo(ex,ey);c.lineTo(ex-14*Math.cos(g-.45),ey-14*Math.sin(g-.45));c.lineTo(ex-14*Math.cos(g+.45),ey-14*Math.sin(g+.45));c.closePath();c.fill();
     c.font='700 16px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.strokeStyle='#0b0d12';c.lineWidth=4;const mx=(x1+x2)/2,my=(y1+y2)/2-12;c.strokeText(n+1,mx,my);c.fillText(n+1,mx,my)});
-   for(const t of m.tk){const[x,y]=P(t.x,t.y),d=dead.has(t.id),sel=mq.pick===t.id;c.globalAlpha=d?.6:1;c.fillStyle=d?'#8b93a7':col(t.tm);c.strokeStyle=sel?'#fff':'#0b0d12';c.lineWidth=sel?5:3;c.beginPath();c.arc(x,y,13,0,7);c.stroke();c.fill();c.globalAlpha=1;
-    c.font='600 14px sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.fillStyle='#fff';c.strokeStyle='#0b0d12';c.lineWidth=3;c.strokeText(t.n,x,y-20);c.fillText(t.n,x,y-20);
-    if(d){c.font='16px sans-serif';c.textBaseline='middle';c.fillText('☠',x,y+1)}}
+   const ros=D.board?[]:(D.fr.get(D.T[Math.floor(i)])||[]),rn=numMap(ros),bn={2:0,3:0};
+   for(const t of m.tk){const[x,y]=P(t.x,t.y),d=dead.has(t.id),sel=mq.pick===t.id;
+    let nu;{const sid=t.s!==undefined?t.s:(ros.find(r=>r.team_num==t.tm&&r.name===t.n)||{}).steamid;nu=sid!==undefined&&rn.has(sid)?rn.get(sid):NB[t.tm]+Math.min(bn[t.tm]||0,4);bn[t.tm]=(bn[t.tm]||0)+1}c.globalAlpha=d?.6:1;c.fillStyle=d?'#8b93a7':col(t.tm);c.strokeStyle=sel?'#fff':'#0b0d12';c.lineWidth=sel?5:3;c.beginPath();c.arc(x,y,13,0,7);c.stroke();c.fill();c.globalAlpha=1;
+    c.textAlign='center';c.fillStyle='#fff';c.strokeStyle='#0b0d12';c.lineWidth=3;
+    if(d){c.font='16px sans-serif';c.textBaseline='middle';c.fillText('☠',x,y+1)}else{c.font='700 14px sans-serif';c.textBaseline='middle';c.strokeText(nu,x,y+1);c.fillText(nu,x,y+1)}
+    c.textBaseline='alphabetic';if(showN){c.font='600 14px sans-serif';c.strokeText(t.n,x,y-20);c.fillText(t.n,x,y-20)}}
    c.restore()}
   function mqSet(on,snap){mq.on=on;mq.pick=mq.drag=null;stg.classList.toggle('mq',on);$$('mq').classList.toggle('on',on);
    if(on){play=false;$$('pp').textContent='▶';if(snap&&!D.board)mqSnap();const nb=$$('nmq');if(nb)nb.checked=true}else{const b=el.querySelector('#tl2 [data-tool=""]');if(b)b.click()}mqUi();bh()}
-  $$('mq').onclick=()=>mqSet(!mq.on,true);
+  $$('mq').onclick=()=>{mqSet(!mq.on,true);ndDis=false;noteAuto()};
   if(D.board){mq.on=true;stg.classList.add('mq');$$('mq').parentNode.style.display='none';mqUi();bh()}
   $$('mqa').onclick=()=>mqAdd(2);$$('mqb').onclick=()=>mqAdd(3);
   $$('mqr').onclick=()=>{if(confirm('Repor a maquete? Perdes as posições e as mortes atuais.'))mqSnap()};
   $$('mkp').onclick=e=>{const k=e.target.dataset.k,m=mqCur();if(k!==undefined&&m){m.kl.splice(+k,1);save();mqUi()}};
+  // arrastar as cartas pela faixa colorida: muda a posição e, por isso, o número (T 0–4, CT 5–9)
+  {let dg=null;const clr=()=>el.querySelectorAll('.pc.ov').forEach(x=>x.classList.remove('ov','ovb'));
+   const cardAt=(e,tn)=>{const x=document.elementFromPoint(e.clientX,e.clientY),c2=x&&x.closest&&x.closest('.pc');return c2&&c2.dataset.tn===tn&&c2!==dg.card?c2:null};
+   const onDown=e=>{const g=e.target.closest&&e.target.closest('.gp');if(!g)return;const card=g.closest('.pc');if(!card)return;e.preventDefault();dg={card,sid:card.dataset.s,tn:card.dataset.tn,over:null};plDrag=true;card.classList.add('drg');try{g.setPointerCapture(e.pointerId)}catch(x){}};
+   const onMove=e=>{if(!dg)return;clr();const c2=cardAt(e,dg.tn);dg.over=c2;if(c2){const r=c2.getBoundingClientRect();dg.after=e.clientY>r.top+r.height/2;c2.classList.add('ov');c2.classList.toggle('ovb',dg.after)}};
+   const onUp=e=>{if(!dg)return;const d=dg;dg=null;plDrag=false;clr();d.card.classList.remove('drg');
+    if(d.over){const L=[...d.card.parentNode.children].map(c2=>c2.dataset.s).filter(s2=>s2!==d.sid),k=L.indexOf(d.over.dataset.s);L.splice(k+(d.after?1:0),0,d.sid);const ps=anno.pos||(anno.pos={});L.forEach((s2,n)=>{ps[s2]=n});save();lastI=-1}};
+   for(const id of ['pl2','pl3']){const b=$$(id);b.addEventListener('pointerdown',onDown);b.addEventListener('pointermove',onMove);b.addEventListener('pointerup',onUp);b.addEventListener('pointercancel',onUp)}}
   let pan=null;
   const zmUi=()=>{const b=$$('zr');if(b)b.textContent=zm.k.toFixed(1).replace(/\.0$/,'')+'×';cv.style.cursor=zm.k>1?'grab':''};
   const zmClamp=()=>{if(zm.k<=1){zm.k=1;zm.x=zm.y=0}else{zm.x=Math.min(0,Math.max(S-S*zm.k,zm.x));zm.y=Math.min(0,Math.max(S-S*zm.k,zm.y))}};
@@ -341,7 +361,7 @@ function demoPlay(D,el,p){
    const[x,y]=P(r.X,r.Y),onF=th==null||(floor==='low')===(r.Z<th);
    c.save();c.globalAlpha=mq.on?.18:onF?1:.3;c.fillStyle='rgba(15,18,26,.85)';c.strokeStyle=col(r.team);c.lineWidth=3;c.beginPath();c.arc(x,y,14,0,7);c.fill();c.stroke();
    c.font='18px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.fillText('☠',x,y+1);
-   c.font='600 12px sans-serif';c.textBaseline='alphabetic';c.fillStyle='#c3c9d6';c.strokeStyle='#0b0d12';c.lineWidth=3;c.strokeText(d.user_name||'',x,y-20);c.fillText(d.user_name||'',x,y-20);c.restore()}}
+   if(showN){c.font='600 12px sans-serif';c.textBaseline='alphabetic';c.fillStyle='#c3c9d6';c.strokeStyle='#0b0d12';c.lineWidth=3;c.strokeText(d.user_name||'',x,y-20);c.fillText(d.user_name||'',x,y-20)}c.restore()}}
  function drawUtil(u,tk){const[x,y]=P(u.x,u.y),onF=th==null||(floor==='low')===(u.z<th),tc=teamOf(u)?col(teamOf(u)):'#cbd5e1',left=(u.e-tk)/64,pg=(tk-u.t)/Math.max(1,u.e-u.t),rw=w=>Math.abs(P(u.x+w,u.y)[0]-x);
   c.save();c.globalAlpha=(onF?1:.25)*Math.min(1,left+.2);
   const ring=(r,f,s,lw)=>{c.fillStyle=f;c.strokeStyle=s;c.lineWidth=lw;c.beginPath();c.arc(x,y,r,0,7);c.fill();c.stroke()};

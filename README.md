@@ -36,6 +36,8 @@ Plataforma pessoal de análise, revisão e treino de videojogos. Corre 100% no n
 - **Sem buytime**: marcado, salta logo o tempo de compras (o relógio da ronda e a timeline começam quando o buytime acaba), na ronda atual e nas seguintes. A etiqueta de tempo da timeline mostra o mesmo relógio do topo.
 - **Logs detalhados da ronda** no canto inferior direito: compras, granadas lançadas, flashes (quem cegou quem e quanto tempo), dano (quem tirou quanto a quem, arma, zona do corpo, vida restante, fogo amigo), kills (cabeça, parede, smoke, distância, assists), bomba (largada, apanhada, plantar/desarmar) e fim da ronda, com filtros por categoria. O relógio do topo mostra os T e CT vivos; clicar numa linha salta para esse momento. O conteúdo das notas aparece ao lado do menu inferior esquerdo.
 - **Notas**: só o título aparece (nas notas ao vivo e na lista); o ✕ para apagar fica no canto superior esquerdo; o botão 📝 Notas abre a lista no canto inferior direito e, ao escolher uma nota, mostra o texto e salta para o momento.
+- **Números nos jogadores e nomes opcionais**: cada jogador do mapa (replay e Maquete) mostra um número dentro da bola — T de 0 a 4, CT de 5 a 9, pela posição. Nas cartas dos jogadores, a faixa laranja/azul da esquerda (com o número) serve de pega: **arrasta-a para cima/baixo** para mudar a posição e, com ela, o número (fica guardado no projeto). A opção **Nomes** (na Vista) esconde/mostra os nomes no mapa.
+- **Painel "Criar nota" automático**: ao escolher uma ferramenta de desenho ou ao ligar a Maquete, o painel Criar nota abre sozinho (✕ fecha) para anexares logo os desenhos/a maquete a uma nota.
 - Radares incluídos para 25 mapas (ver `assets/radars/radars.json`).
 
 ## Ainda não existe
