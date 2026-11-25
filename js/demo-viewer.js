@@ -64,23 +64,56 @@ function demoPlay(D,el,p){
  const PIS=['Glock-18','USP-S','P2000','P250','Five-SeveN','Tec-9','CZ75-Auto','Desert Eagle','Dual Berettas','R8 Revolver'];
  function gear(r){const inv=Array.isArray(r.inventory)?r.inventory:[];let w='',pis='',u='',c4=false;for(const n of inv){if(GR[n])u+=GR[n];else if(n==='C4 Explosive')c4=true;else if(PIS.includes(n))pis=n;else if(!/^knife|^Zeus|taser/i.test(n))w=n}return{w:w||pis||'—',u,c4}}
  const win=k=>{const e=D.ends.find(e=>e.tick>=rounds[k]&&e.tick<rend(k));return e?e.w:''};
- el.innerHTML=`<div class="stg${D.board?' board':''}"><canvas id="cv" width="${S}" height="${S}"></canvas>
- <div class="tw"><div class="tc"><div class="tm side2">T <b id="sc2">0</b></div><div class="mid"><b id="tm">0:00</b><span id="rn"></span></div><div class="tm side3"><b id="sc3">0</b> CT</div></div>
- <div class="rsel"><button class="g" id="rp">◀</button><select id="rs">${rounds.map((t,k)=>`<option value="${k}">Ronda ${k+1}${win(k)?' · '+win(k):''}</option>`).join('')}</select><button class="g" id="rx">▶</button><label class="g" title="Saltar o tempo de compras: a ronda começa quando o buytime acaba"><input type="checkbox" id="by"${buy?'':' checked'}> Sem buytime</label></div></div>
- 
- 
- <div class="bar"><div class="tlb" id="tlb"></div>
- <div class="ctl"><span id="tt" class="mut"></span><div class="grp"><button class="g" data-s="-60">−15</button><button class="g" data-s="-20">−5</button></div><button id="pp" class="play">▶</button><div class="grp"><button class="g" data-s="20">+5</button><button class="g" data-s="60">+15</button></div>
- <div class="grp" id="spd">${[.25,.5,1,2,4].map(v=>`<button class="g${v==1?' on':''}" data-v="${v}">${v}×</button>`).join('')}</div>
- ${R&&R.low&&!D.board?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}</div>
+ const _i=d=>`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+ const IC={cur:_i('<path d="M5 3l14 7-6 2-2 6z"/>'),pen:_i('<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>'),line:_i('<path d="M5 19L19 5"/>'),arrow:_i('<path d="M5 19L19 5"/><path d="M10 5h9v9"/>'),circle:_i('<circle cx="12" cy="12" r="8"/>'),text:_i('<path d="M5 7V5h14v2M12 5v14M9 19h6"/>'),erase:_i('<path d="M3 17l9-9 6 6-5 5H7z"/><path d="M12 8l6 6"/>'),undo:_i('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>'),trash:_i('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'),zin:_i('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4M8.5 11h5M11 8.5v5"/>'),zout:_i('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4M8.5 11h5"/>'),plus:_i('<path d="M12 5v14M5 12h14"/>'),list:_i('<path d="M5 6h14M5 12h14M5 18h9"/>'),layers:_i('<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>'),full:_i('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),reset:_i('<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>')};
+ el.innerHTML=`<div class="stg${D.board?' board':''}">
+ <div class="cvw"><canvas id="cv" width="${S}" height="${S}"></canvas></div>
+ <div class="tw"><div class="tc"><div class="tm side2"><span>T</span><b id="sc2">0</b></div><div class="mid"><b id="tm">0:00</b><span id="rn"></span></div><div class="tm side3"><b id="sc3">0</b><span>CT</span></div></div></div>
+
+ <div class="colL">
+  <div class="pn utp"><div class="ph">Utilidades no mapa</div><div class="grp wrapg">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,i_,t])=>`<button class="g" data-tool="${k}" title="${t}">${i_} ${t}</button>`).join('')}</div></div>
+  <div class="pl" id="pl2"></div>
+  <div class="pn tp">
+   ${D.board?`<div class="sec"><div class="ph">Mapa</div><div class="rowc"><select id="mp">${Object.keys(RADAR).sort((x,y)=>(x.startsWith('de_')?0:1)-(y.startsWith('de_')?0:1)||x.localeCompare(y)).map(m=>`<option value="${m}"${m===D.map?' selected':''}>${m.replace(/^(de|cs|ar)_/,'').replace(/_/g,' ')}</option>`).join('')}</select>${R&&R.low?'<button class="g solid" id="fl">Piso: superior</button>':''}</div></div>`:''}
+   <div class="sec"><div class="ph">Desenhar</div>
+    <div class="grp tools7" id="tl2">${[['',IC.cur,'Cursor'],['pen',IC.pen,'Livre'],['line',IC.line,'Linha'],['arrow',IC.arrow,'Seta'],['circle',IC.circle,'Círculo'],['text',IC.text,'Texto'],['erase',IC.erase,'Borracha']].map(([k,s,t],n)=>`<button class="g${n?'':' on'}" data-tool="${k}" title="${t}">${s}</button>`).join('')}</div>
+    <div class="rowc sp" id="cols">${['#ffd43b','#ff6b6b','#51cf66','#4dabf7','#ffffff'].map((c,n)=>`<button class="g sw${n?'':' on'}" data-c="${c}" style="--sw:${c}" title="Cor"></button>`).join('')}<input type="color" id="cc" value="#ffd43b" title="Cor personalizada"></div>
+    <div class="rowc"><span id="durg"><select id="dur" title="Durante quanto tempo o desenho fica visível"><option value="640">Visível 10 s</option><option value="320">Visível 5 s</option><option value="1920">Visível 30 s</option><option value="0">Ronda toda</option></select></span><button class="g solid ic" id="un" title="Desfazer o último desenho">${IC.undo}</button><button class="g solid" id="cl" title="Apagar os desenhos soltos">${IC.trash}${D.board?'Limpar':'Ronda'}</button></div>
+   </div>
+   <div class="sec"><div class="ph">Maquete</div>
+    <div class="rowc"><button class="g solid wide" id="mq" title="Maquete: arrasta os jogadores e as utilidades. ☠ Matar: clica no atirador e depois na vítima. Duplo clique renomeia; ⌫ ou botão direito apaga.">${IC.layers}Maquete</button></div>
+    <div class="rowc mqx"><button class="g solid" id="mqa" title="Adicionar jogador T">+ T</button><button class="g solid" id="mqb" title="Adicionar jogador CT">+ CT</button><button class="g solid" data-tool="m-kill" title="Matar: clica no atirador e depois na vítima">☠ Matar</button><button class="g solid ic" id="mqr" title="Repor a maquete (volta a tirar a fotografia do instante atual)">${IC.reset}</button></div>
+   </div>
+   <div class="sec"><div class="ph">Notas</div>
+    <div class="rowc"><button class="pri" id="nt">${IC.plus}Criar nota</button><button class="g solid" id="nvw">${IC.list}Ver notas <span class="cnt" id="nc">0</span></button></div>
+   </div>
+   <div class="sec"><div class="ph">Vista</div>
+    <div class="rowc"><div class="grp" id="zmg"><button class="g ic" id="zo" title="Menos zoom (ou roda do rato)">${IC.zout}</button><button class="g" id="zr" title="Repor zoom">1×</button><button class="g ic" id="zi" title="Mais zoom (ou roda do rato)">${IC.zin}</button></div>${D.board?'':`<label class="g chk" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}>Utilidades</label><label class="g chk" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}>Tiros</label>`}<button class="g solid ic" id="fs" title="Ecrã inteiro">${IC.full}</button></div>
+   </div>
+  </div>
  </div>
- <div class="colL"><div class="utp"><div class="kh">Utilidades no mapa</div><div class="grp" style="flex-wrap:wrap">${[['u-smoke','☁','Smoke'],['u-molotov','🔥','Molo'],['u-flash','⚡','Flash'],['u-he','💥','HE'],['u-bomb','💣','Bomba']].map(([k,ic,t])=>`<button class="g" data-tool="${k}" title="${t}">${ic} ${t}</button>`).join('')}</div></div><div class="pl" id="pl2"></div><div class="mkp" id="mkp"></div><div class="nd pop" id="nd"><div class="kh">Criar nota</div><div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input type="text" id="nti" style="flex:1" placeholder="Título"></div><label class="nmq"><input type="checkbox" id="nmq" checked> 🧩 Anexar a maquete desta ronda</label><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><button id="na" style="margin:8px 0 10px;width:100%">Adicionar nota</button></div><div class="nd pop" id="nlp"><div class="kh">Notas</div><div id="nl"></div></div><div class="ctl tools">${D.board?`<div class="grp"><select id="mp">${Object.keys(RADAR).sort((x,y)=>(x.startsWith('de_')?0:1)-(y.startsWith('de_')?0:1)||x.localeCompare(y)).map(m=>`<option value="${m}"${m===D.map?' selected':''}>${m.replace(/^(de|cs|ar)_/,'').replace(/_/g,' ')}</option>`).join('')}</select></div>${R&&R.low?'<div class="grp"><button class="g" id="fl">Piso: superior</button></div>':''}`:''}<div class="grp" id="tl2">${[['','✋','Cursor'],['pen','✏️','Livre'],['line','／','Linha'],['arrow','➚','Seta'],['circle','◯','Círculo'],['text','T','Texto'],['erase','⌫','Borracha']].map(([k,ic,t],n)=>`<button class="g${n?'':' on'}" data-tool="${k}" title="${t}">${ic}</button>`).join('')}</div>
- <div class="grp" id="zmg"><button class="g" id="zo" title="Menos zoom (ou roda do rato)">🔍−</button><button class="g" id="zr" title="Repor zoom">1×</button><button class="g" id="zi" title="Mais zoom (ou roda do rato)">🔍+</button></div>
- <div class="grp" id="cols">${['#ffd43b','#ff6b6b','#51cf66','#4dabf7','#ffffff'].map((c,n)=>`<button class="g sw${n?'':' on'}" data-c="${c}" style="--sw:${c}"></button>`).join('')}<input type="color" id="cc" value="#ffd43b" title="Cor personalizada"></div>
- <div class="grp" id="durg"><select id="dur"><option value="640">Visível 10 s</option><option value="320">Visível 5 s</option><option value="1920">Visível 30 s</option><option value="0">Ronda toda</option></select></div>
- <div class="grp"><button class="g" id="un" title="Desfazer">↶</button><button class="g" id="cl">${D.board?'🗑 Limpar':'🗑 Ronda'}</button></div>
- <div class="grp"><button class="g" id="mq" title="Maquete: arrasta os jogadores e as utilidades. ☠ Matar: clica no atirador e depois na vítima. Duplo clique renomeia; ⌫ ou botão direito apaga.">🧩 Maquete</button></div><div class="grp mqx"><button class="g" id="mqa" title="Adicionar jogador T">+ T</button><button class="g" id="mqb" title="Adicionar jogador CT">+ CT</button><button class="g" data-tool="m-kill" title="Matar: clica no atirador e depois na vítima">☠ Matar</button><button class="g" id="mqr" title="Repor a maquete">↻ Repor</button></div><div class="grp"><button class="g" id="nt">✏️ Criar nota</button><button class="g" id="nvw">📋 Ver notas <span id="nc">0</span></button></div>
- <div class="grp">${D.board?'':`<label class="g" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}> Utilidades</label><label class="g" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}> Tiros</label>`}<button class="g" id="fs" title="Ecrã inteiro">⛶</button></div></div></div><div class="colR"><div class="pl pr" id="pl3"></div><div class="nv" id="nv"></div><div class="lg" id="lg"><div class="kh"><span id="lgt">Logs</span><span class="lf"><button class="g on" data-f="kill" title="Kills">☠</button><button class="g on" data-f="hurt" title="Dano">💢</button><button class="g on" data-f="nade" title="Granadas e flashes">🧨</button><button class="g on" data-f="bomb" title="Bomba">💣</button><button class="g on" data-f="buy" title="Compras">🛒</button></span></div><div id="lgl"></div></div><div id="ln" style="display:none"></div></div></div>`;
+
+ <div class="nbox">
+  <div class="pn mkp" id="mkp"></div>
+  <div class="pn nv" id="nv"></div>
+  <div class="pn nd pop" id="nd"><div class="kh">Criar nota</div><input type="text" id="nti" placeholder="Título"><textarea id="ni" placeholder="Texto da nota… (Ctrl+Enter adiciona)" rows="3"></textarea><label class="opt nmq"><input type="checkbox" id="nmq" checked>Anexar a maquete desta ronda</label><label class="opt" id="nshl"><input type="checkbox" id="nsh" checked><span id="nshs">Anexar os desenhos desta ronda</span></label><button class="pri wide" id="na">Adicionar nota</button></div>
+  <div class="pn nd pop" id="nlp"><div class="kh">Notas</div><div id="nl"></div></div>
+  <div id="ln" style="display:none"></div>
+ </div>
+
+ <div class="colR">
+  <div class="pl pr" id="pl3"></div>
+  <div class="pn lg" id="lg"><div class="kh"><span id="lgt">Logs</span><span class="lf"><button class="g on" data-f="kill" title="Kills">☠</button><button class="g on" data-f="hurt" title="Dano">💢</button><button class="g on" data-f="nade" title="Granadas e flashes">🧨</button><button class="g on" data-f="bomb" title="Bomba">💣</button><button class="g on" data-f="buy" title="Compras">🛒</button></span></div><div id="lgl"></div></div>
+ </div>
+
+ <div class="pn bar"><div class="tlb" id="tlb"></div>
+  <div class="bctl">
+   <div class="b1"><div class="rsel"><button class="g" id="rp" title="Ronda anterior">◀</button><select id="rs">${rounds.map((t,k)=>`<option value="${k}">Ronda ${k+1}${win(k)?' · '+win(k):''}</option>`).join('')}</select><button class="g" id="rx" title="Ronda seguinte">▶</button></div><label class="g chk" title="Saltar o tempo de compras: a ronda começa quando o buytime acaba"><input type="checkbox" id="by"${buy?'':' checked'}>Sem buytime</label></div>
+   <div class="b2"><span id="tt" class="mut"></span><div class="grp"><button class="g" data-s="-60">−15</button><button class="g" data-s="-20">−5</button></div><button id="pp" class="play">▶</button><div class="grp"><button class="g" data-s="20">+5</button><button class="g" data-s="60">+15</button></div></div>
+   <div class="b3"><div class="grp" id="spd">${[.25,.5,1,2,4].map(v=>`<button class="g${v==1?' on':''}" data-v="${v}">${v}×</button>`).join('')}</div>${R&&R.low&&!D.board?'<button class="g solid" id="fl">Piso: superior</button>':''}</div>
+  </div>
+ </div>
+</div>`;
  const cv=document.getElementById('cv'),c=cv.getContext('2d'),$$=id=>document.getElementById(id);
  const stg=el.querySelector('.stg');
  const fit=()=>{if(!document.body.contains(stg)){removeEventListener('resize',fit);document.removeEventListener('fullscreenchange',fit);return}stg.style.height=document.fullscreenElement===stg?'100vh':Math.max(560,innerHeight-(stg.getBoundingClientRect().top+scrollY)-2)+'px'};
@@ -132,17 +165,17 @@ function demoPlay(D,el,p){
    c.fillStyle=cl;c.strokeStyle='#0b0d12';c.lineWidth=3;c.beginPath();c.arc(x,y,10,0,7);c.stroke();c.fill();
    c.font='600 14px sans-serif';c.textAlign='center';c.fillStyle='#fff';c.strokeText(r.name||'',x,y-16);c.fillText(r.name||'',x,y-16);c.globalAlpha=1}
   if(showS&&!mq.on)drawShots(tkn);
-  for(const s of anno.shapes)if(vis(s))drawShape(s);if(cur)drawShape(cur);mqDraw();
+  for(const s of anno.shapes)if(vis(s))drawShape(s);{const sn=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(sn&&sn.shapes)for(const s of sn.shapes)drawShape(s)}if(cur)drawShape(cur);mqDraw();
   const t=D.T[a];
   const cu=$$('cur');if(cu){cu.style.left=pcr(t);const ct=$$('curt');if(ct)ct.style.left=pcr(t)}
   if(a!==lastI){lastI=a;
    $$('tt').textContent=fmt(Math.max(0,(t-rs)/64))+' / '+fmt((re-rs)/64);
-   let ck,lb;if(t<curFe){ck=buy?fmt((curFe-t)/64):'1:55';lb='COMPRAS'}else if(curPl&&t>=curPl){ck=fmt(Math.max(0,40-(t-curPl)/64));lb='BOMBA'}else{ck=fmt(Math.max(0,115-(t-curFe)/64));lb='RONDA'}
+   let ck,lb;if(t<curFe){ck=buy?fmt((curFe-t)/64):'1:55';lb='Compras'}else if(curPl&&t>=curPl){ck=fmt(Math.max(0,40-(t-curPl)/64));lb='Bomba'}else{ck=fmt(Math.max(0,115-(t-curFe)/64));lb='Ronda'}
    $$('tm').textContent=ck;{const ctt=$$('curt');if(ctt)ctt.textContent=ck}{const aT=A.filter(r=>r.team_num==2&&r.health>0).length,aC=A.filter(r=>r.team_num==3&&r.health>0).length;$$('rn').innerHTML=lb+' · <span style="color:#f08c00">'+aT+'T</span> vs <span style="color:#4dabf7">'+aC+'CT</span>'}renderLive(t);renderLog(t);
    let s3=0,s2=0;for(const e of D.ends)if(e.tick<=t){if(e.w==='CT')s3++;else if(e.w==='T')s2++}
    $$('sc3').textContent=s3;$$('sc2').textContent=s2;
    const ks=D.deaths.filter(d=>d.tick<=t),kd={},dd={};for(const d of ks){kd[d.attacker_steamid]=(kd[d.attacker_steamid]||0)+1;dd[d.user_steamid]=(dd[d.user_steamid]||0)+1}
-   for(const tn of [3,2])$$('pl'+tn).innerHTML=A.filter(r=>r.team_num==tn).map(r=>{const h=Math.max(0,r.health||0),g=gear(r);return`<div class="pc${h?'':' dead'}" style="--c:${col(tn)}"><div class="nm">${esc(r.name||'')}</div><span class="hp">${h}</span><div class="hb"><i style="width:${h}%"></i></div>${h?`<div class="gr"><span>${esc(g.w)}</span><b>$${r.balance??''}</b></div><div class="gr"><span>${g.u}</span><span>${r.armor_value>0?'🛡'+r.armor_value+(r.has_helmet?'⛑':''):''}${r.has_defuser?' 🔧':''}${g.c4?' 💣':''}</span></div>`:''}<div class="kd">⌖ ${kd[r.steamid]||0} · ☠ ${dd[r.steamid]||0}</div></div>`}).join('');
+   for(const tn of [3,2])$$('pl'+tn).innerHTML=A.filter(r=>r.team_num==tn).map(r=>{const h=Math.max(0,r.health||0),g=gear(r);return`<div class="pc${h?'':' dead'}" style="--c:${col(tn)}"><div class="r1"><span class="nm">${esc(r.name||'')}</span><span class="kd">⌖${kd[r.steamid]||0} ☠${dd[r.steamid]||0}</span><span class="hp">${h}</span></div><div class="hb"><i style="width:${h}%"></i></div>${h?`<div class="gr"><span>${esc(g.w)}</span><b>$${r.balance??''}</b></div><div class="gr"><span>${g.u}</span><span>${r.armor_value>0?'🛡'+r.armor_value+(r.has_helmet?'⛑':''):''}${r.has_defuser?' 🔧':''}${g.c4?' 💣':''}</span></div>`:''}</div>`}).join('');
   }
  }
  // ---- anotações e desenhos (guardados à parte: registo "<id>:anno") ----
@@ -153,7 +186,7 @@ function demoPlay(D,el,p){
  const vis=s=>{const t=D.T[Math.floor(i)];return t>=s.t&&(s.d?t<s.t+s.d:t<rend(rIdx(s.t)))};
  const dur=()=>D.board?0:+$$('dur').value;
   let selN=null,lastLn='';
-  const nt=n=>(n.mock?'🧩 ':'')+(n.title||(n.text||'').slice(0,40)||'Nota');
+  const nt=n=>(n.mock?'🧩 ':'')+(n.shapes&&n.shapes.length?'✏️ ':'')+(n.title||(n.text||'').slice(0,40)||'Nota');
   const delNote=id=>{anno.notes=anno.notes.filter(n=>String(n.id)!==String(id));if(String(selN)===String(id))selN=null;save();refresh()};
   function renderLive(t){return;const L=anno.notes.filter(n=>D.board||(t>=n.t&&t<n.t+640));const h=L.map(n=>`<div class="lnc" data-id="${n.id}" style="--c:${n.c||'#ffd43b'}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><span>${esc(nt(n))}</span></div>`).join('');if(h!==lastLn){lastLn=h;$$('ln').innerHTML=h}}
  function refresh(){$$('nc').textContent=anno.notes.length;renderNotes();lastI=-1;if(lastR>=0)setRound(lastR)}
@@ -188,7 +221,7 @@ function demoPlay(D,el,p){
   const lgApply=()=>{LF.forEach(c=>$$('lg').classList.toggle('off-'+c,lgOff.has(c)));el.querySelectorAll('#lg [data-f]').forEach(b=>b.classList.toggle('on',!lgOff.has(b.dataset.f)))};lgApply();
   $$('lg').onclick=e=>{const b=e.target.closest('[data-f]');if(b){const c=b.dataset.f;lgOff.has(c)?lgOff.delete(c):lgOff.add(c);try{localStorage.setItem('ugr_lgoff',JSON.stringify([...lgOff]))}catch(x){}lgApply();return}const r=e.target.closest('[data-t]');if(r){i=idxOf(+r.dataset.t-160);play=false;$$('pp').textContent='▶'}};
   function renderViewer(){const v=$$('nv'),n=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN));if(mqPrev&&!(n&&n.mock)){const q=mqPrev;mqPrev=null;if(q.mock)anno.mocks[q.key]=q.mock;else delete anno.mocks[q.key];save();mqSet(q.on,false)}
-  if(!n){v.style.display='none';v.innerHTML='';return}v.style.display='block';v.style.setProperty('--c',n.c||'#ffd43b');v.innerHTML='<b>'+esc(nt(n))+'</b>'+(n.text?'<div>'+esc(n.text)+'</div>':'')}
+  if(!n){v.style.display='none';v.innerHTML='';return}v.style.display='block';v.style.setProperty('--c',n.c||'#ffd43b');v.innerHTML='<b>'+esc(nt(n))+'</b>'+(n.text?'<div>'+esc(n.text)+'</div>':'')+(n.shapes&&n.shapes.length?'<small>✏️ '+n.shapes.length+(n.shapes.length>1?' desenhos':' desenho')+' desta nota no mapa</small>':'')}
   function renderNotes(){renderViewer();const L=[...anno.notes].sort((a,b)=>a.t-b.t);$$('nl').innerHTML=L.length?L.map(n=>`<div class="mk${n.id===selN?' sel':''}" data-t="${n.t}" data-id="${n.id}"><u class="x" data-d="${n.id}" title="Apagar nota">✕</u><em class="dt" style="background:${n.c||'#ffd43b'}"></em><time>R${rIdx(n.t)+1} ${fmt(Math.max(0,n.t-rounds[rIdx(n.t)])/64)}</time><b>${esc(nt(n))}</b></div>`).join(''):'<div class="mut" style="padding:6px">Sem notas.</div>'}
  function drawShape(s){c.save();c.strokeStyle=c.fillStyle=s.c;c.lineWidth=s.w;c.lineCap=c.lineJoin='round';const q=s.pts.map(v=>P(v[0],v[1]));
   if(s.type==='pen'){c.beginPath();q.forEach((v,n)=>n?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]));c.stroke()}
@@ -207,7 +240,7 @@ function demoPlay(D,el,p){
   if(s.type==='circle')return Math.abs(Math.hypot(pp[0]-pq[0][0],pp[1]-pq[0][1])-Math.hypot(pq[1][0]-pq[0][0],pq[1][1]-pq[0][1]));
   if(s.type==='text'||pq.length===1)return Math.hypot(pp[0]-pq[0][0],pp[1]-pq[0][1]);
   let m=1e9;for(let n=1;n<pq.length;n++)m=Math.min(m,seg(pq[n-1],pq[n]));return m};
- const erase=w=>{let best=null,bd=24;for(const s of anno.shapes)if(vis(s)){const d=dist(s,w);if(d<bd){bd=d;best=s}}if(best){anno.shapes=anno.shapes.filter(x=>x!==best);save();refresh()}};
+ const erase=w=>{const sn=selN!=null&&anno.notes.find(x=>String(x.id)===String(selN)),pool=[...anno.shapes.filter(vis).map(s=>[s,anno.shapes]),...(sn&&sn.shapes?sn.shapes.map(s=>[s,sn.shapes]):[])];let best=null,own=null,bd=24;for(const[s,arr]of pool){const d=dist(s,w);if(d<bd){bd=d;best=s;own=arr}}if(best){own.splice(own.indexOf(best),1);save();refresh()}};
  cv.style.touchAction='none';
  cv.onpointerdown=e=>{if(mq.on&&mqDown(e))return;if(e.button===1||(!tool&&zm.k>1)){e.preventDefault();pan={x:e.clientX,y:e.clientY,ox:zm.x,oy:zm.y};try{cv.setPointerCapture(e.pointerId)}catch(x){}return}if(!tool||tool==='m-kill')return;const w=pt(e),t=D.T[Math.floor(i)];
   if(tool==='erase')return erase(w);
@@ -225,8 +258,12 @@ function demoPlay(D,el,p){
  $$('by').onchange=e=>{buy=!e.target.checked;try{localStorage.setItem('ugr_skipbuy',buy?'0':'1')}catch(x){}setRound(curR());if(!buy&&D.T[Math.floor(i)]<rs)i=idxOf(rs);lastI=-1;draw()};
  $$('un').onclick=()=>{anno.shapes.pop();save();refresh()};
  $$('cl').onclick=()=>{const k=curR();if(confirm('Apagar todos os desenhos desta ronda?')){anno.shapes=anno.shapes.filter(s=>rIdx(s.t)!==k);save();refresh()}};
- function addNote(){const x=$$('ni').value.trim(),ti=$$('nti').value.trim();if(!x&&!ti)return;const nm={id:Date.now(),t:D.T[Math.floor(i)],title:ti,text:x,c:color},mc=mq.on&&$$('nmq').checked&&mqCur();if(mc)nm.mock=JSON.parse(JSON.stringify(mc));anno.notes.push(nm);$$('ni').value='';$$('nti').value='';save();refresh()}
- $$('na').onclick=addNote;$$('ni').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))addNote()};
+ const roundShapes=()=>anno.shapes.filter(s=>rIdx(s.t)===curR());
+  function shUi(){const n=roundShapes().length,l=$$('nshl');if(!l)return;l.style.display=n?'flex':'none';$$('nshs').textContent='Anexar '+n+(n>1?' desenhos':' desenho')+' desta ronda'}
+  function addNote(){const x=$$('ni').value.trim(),ti=$$('nti').value.trim(),sh=roundShapes(),att=$$('nsh').checked&&sh.length>0;if(!x&&!ti&&!att)return;const nm={id:Date.now(),t:D.T[Math.floor(i)],title:ti,text:x,c:color},mc=mq.on&&$$('nmq').checked&&mqCur();if(mc)nm.mock=JSON.parse(JSON.stringify(mc));
+   if(att){nm.shapes=JSON.parse(JSON.stringify(sh));anno.shapes=anno.shapes.filter(s=>!sh.includes(s));selN=nm.id}
+   anno.notes.push(nm);$$('ni').value='';$$('nti').value='';$$('nd').classList.remove('open');save();refresh()}
+  $$('na').onclick=addNote;$$('ni').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))addNote()};
   $$('nl').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.mk');if(r&&r.dataset.id){selN=+r.dataset.id===selN?null:+r.dataset.id;if(!D.board){i=idxOf(+r.dataset.t);play=false;$$('pp').textContent='▶'}if(selN!==null){openNote(selN);$$('nlp').classList.remove('open')}renderNotes()}};
   $$('ln').onclick=e=>{const d=e.target.closest('[data-d]');if(d)return delNote(d.dataset.d);const r=e.target.closest('.lnc');if(r){const id=+r.dataset.id;if(selN===id){selN=null;renderNotes();return}selN=id;if(!D.board){i=idxOf(noteT(selN));play=false;$$('pp').textContent='▶'}openNote(selN);renderNotes()}};
   $$('nv').onclick=()=>{selN=null;renderNotes()};
@@ -234,7 +271,7 @@ function demoPlay(D,el,p){
   let mqPrev=null;
   function openNote(id){const n=anno.notes.find(x=>String(x.id)===String(id));if(!n||!n.mock)return;const key=D.board?'b':String(rIdx(n.t));if(!mqPrev)mqPrev={on:mq.on,key,mock:anno.mocks&&anno.mocks[key]?JSON.parse(JSON.stringify(anno.mocks[key])):null};(anno.mocks||(anno.mocks={}))[key]=JSON.parse(JSON.stringify(n.mock));save();mqSet(true,false)}
   const popOut=e=>{if(!document.body.contains(stg)){document.removeEventListener('pointerdown',popOut);return}if(e.target.closest('.pop,#nt,#nvw'))return;$$('nd').classList.remove('open');$$('nlp').classList.remove('open')};document.addEventListener('pointerdown',popOut);
-  $$('nt').onclick=()=>{bh();$$('nlp').classList.remove('open');$$('nd').classList.toggle('open')};
+  $$('nt').onclick=()=>{bh();shUi();$$('nlp').classList.remove('open');$$('nd').classList.toggle('open')};
   $$('nvw').onclick=()=>{bh();$$('nd').classList.remove('open');$$('nlp').classList.toggle('open')};
  try{tx('readonly',s=>s.get(AK)).then(r=>{if(r&&r.anno){anno=r.anno;anno.shapes=anno.shapes||[];anno.notes=anno.notes||[];anno.mocks=anno.mocks||{};refresh();mqUi()}}).catch(()=>{})}catch(e){}
 

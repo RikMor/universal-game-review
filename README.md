@@ -6,6 +6,8 @@ Plataforma pessoal de análise, revisão e treino de videojogos. Corre 100% no n
 
 - **Página inicial** com a lista de jogos (CS2 e Deadlock; mais jogos em breve).
 - **Biblioteca por jogo**: projetos (pastas) com o ficheiro importado e marcadores.
+- **Interface do visualizador reorganizada** (3 colunas, nada fica por cima de nada): à esquerda as cartas dos T e o painel de ferramentas (Desenhar, Maquete, Notas, Vista) até ao fundo; à direita as cartas dos CT e os logs; ao centro o placar, o mapa e, por baixo, a barra com a **timeline**, o **seletor de ronda + Sem buytime**, os controlos de reprodução e a velocidade. As notas (criar, lista e leitura) abrem **ao lado direito do painel de ferramentas**. Em ecrãs estreitos (telemóvel) tudo fica empilhado.
+- **Desenhos ligados às notas**: ao criar uma nota, "Anexar os desenhos desta ronda" passa os desenhos soltos para dentro da nota (✏️). Só aparecem no mapa quando a nota está aberta; a borracha também os apaga.
 - **Leitor de vídeo** (mp4/webm): velocidade 0.25×–2×, saltos de 5 s e marcadores com nota ligados ao instante.
 - **Leitor de demos CS2 (`.dem`, beta)**, lido localmente com WebAssembly:
   - radar 2D com jogadores, direção do olhar, vida e killfeed;
