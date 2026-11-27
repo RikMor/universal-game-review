@@ -64,6 +64,6 @@ async function proj(gid,pid){
  const sp=document.getElementById('sp'),S=[1,.5,.25,2];let si=0;sp.onclick=()=>{si=(si+1)%S.length;v.playbackRate=S[si];sp.textContent='Velocidade '+S[si]+'×'}
 }
 
-function route(){$.className='';const [g,p]=location.hash.slice(1).split('/');if(!g)home();else if(!p)game(g);else proj(g,p)}
+function route(){$.className='';{const h=document.getElementById('rvh');if(h)h.style.display='none'}const [g,p]=location.hash.slice(1).split('/');if(!g)home();else if(!p)game(g);else proj(g,p)}
 addEventListener('hashchange',route);
 open().then(d=>{db=d}).catch(()=>{}).finally(route);

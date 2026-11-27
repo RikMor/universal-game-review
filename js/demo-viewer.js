@@ -88,9 +88,6 @@ function demoPlay(D,el,p){
    <div class="sec"><div class="ph">Notas</div>
     <div class="rowc"><button class="pri" id="nt">${IC.plus}Criar nota</button><button class="g solid" id="nvw">${IC.list}Ver notas <span class="cnt" id="nc">0</span></button></div>
    </div>
-   <div class="sec"><div class="ph">Revisão (coach → aluno)</div>
-    <div class="rowc"><button class="g solid" id="rvs" title="Guardar um ficheiro com os desenhos, notas e maquetes para enviar ao aluno">${_i('<path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>')}Guardar</button><button class="g solid" id="rvo" title="Abrir um ficheiro de revisão enviado pelo coach">${_i('<path d="M12 16V5"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/>')}Abrir</button><input type="file" id="rvf" accept=".json,.ugr,application/json" style="display:none"></div>
-   </div>
    <div class="sec"><div class="ph">Vista</div>
     <div class="rowc"><div class="grp" id="zmg"><button class="g ic" id="zo" title="Menos zoom (ou roda do rato)">${IC.zout}</button><button class="g" id="zr" title="Repor zoom">1×</button><button class="g ic" id="zi" title="Mais zoom (ou roda do rato)">${IC.zin}</button></div><label class="g chk" title="Mostrar os nomes dos jogadores no mapa"><input type="checkbox" id="nn"${showN?' checked':''}>Nomes</label>${D.board?'':`<label class="g chk" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}>Utilidades</label><label class="g chk" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}>Tiros</label>`}<button class="g solid ic" id="fs" title="Ecrã inteiro">${IC.full}</button></div>
    </div>
@@ -292,7 +289,8 @@ function demoPlay(D,el,p){
  const hasAnno=a=>(a.shapes||[]).length||(a.notes||[]).length||Object.keys(a.mocks||{}).length,hasOwn=a=>(a.shapes||[]).length||(a.notes||[]).length;
  const mergeAnno=(a,b)=>{const sid=new Set((a.shapes||[]).map(x=>String(x.id))),nid=new Set((a.notes||[]).map(x=>String(x.id)));
   return{shapes:[...(a.shapes||[]),...(b.shapes||[]).filter(x=>!sid.has(String(x.id)))],notes:[...(a.notes||[]),...(b.notes||[]).filter(x=>!nid.has(String(x.id)))],mocks:{...(a.mocks||{}),...(b.mocks||{})},pos:{...(a.pos||{}),...(b.pos||{})}}};
- $$('rvs').onclick=()=>{
+ $$('rvh').style.display='flex';
+  $$('rvs').onclick=()=>{
   const a=JSON.parse(JSON.stringify(anno));
   if(mqPrev){const q=mqPrev;if(q.mock)a.mocks[q.key]=JSON.parse(JSON.stringify(q.mock));else delete a.mocks[q.key]}
   if(!hasAnno(a)&&!confirm('Ainda não tens desenhos, notas nem maquetes. Guardar mesmo assim um ficheiro vazio?'))return;

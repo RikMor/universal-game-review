@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header><div class="logo" onclick="location.hash=''">Universal <b>Game Review</b></div><div class="sp"></div><span class="mut" style="font-size:13px">Dados guardados localmente no teu dispositivo</span></header>
+<header><div class="logo" onclick="location.hash=''">Universal <b>Game Review</b></div><div class="sp"></div><span id="rvh" style="display:none;gap:8px"><button class="ghost" id="rvs" style="padding:6px 12px;font-size:13px" title="Guardar um ficheiro com os desenhos, notas e maquetes para enviar ao aluno"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>Guardar</button><button class="ghost" id="rvo" style="padding:6px 12px;font-size:13px" title="Abrir um ficheiro de revisão enviado pelo coach"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M12 16V5"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg>Abrir</button><input type="file" id="rvf" accept=".json,.ugr,application/json" style="display:none"></span><span class="mut" style="font-size:13px">Dados guardados localmente no teu dispositivo</span></header>
 <main id="app"></main>
 <script src="js/vendor/demoparser.js"></script>
 <script src="js/demo-viewer.js"></script>
