@@ -88,6 +88,9 @@ function demoPlay(D,el,p){
    <div class="sec"><div class="ph">Notas</div>
     <div class="rowc"><button class="pri" id="nt">${IC.plus}Criar nota</button><button class="g solid" id="nvw">${IC.list}Ver notas <span class="cnt" id="nc">0</span></button></div>
    </div>
+   <div class="sec"><div class="ph">Revisão (coach → aluno)</div>
+    <div class="rowc"><button class="g solid" id="rvs" title="Guardar um ficheiro com os desenhos, notas e maquetes para enviar ao aluno">${_i('<path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>')}Guardar</button><button class="g solid" id="rvo" title="Abrir um ficheiro de revisão enviado pelo coach">${_i('<path d="M12 16V5"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/>')}Abrir</button><input type="file" id="rvf" accept=".json,.ugr,application/json" style="display:none"></div>
+   </div>
    <div class="sec"><div class="ph">Vista</div>
     <div class="rowc"><div class="grp" id="zmg"><button class="g ic" id="zo" title="Menos zoom (ou roda do rato)">${IC.zout}</button><button class="g" id="zr" title="Repor zoom">1×</button><button class="g ic" id="zi" title="Mais zoom (ou roda do rato)">${IC.zin}</button></div><label class="g chk" title="Mostrar os nomes dos jogadores no mapa"><input type="checkbox" id="nn"${showN?' checked':''}>Nomes</label>${D.board?'':`<label class="g chk" title="Mostrar as utilidades lançadas pelos jogadores"><input type="checkbox" id="uu"${showU?' checked':''}>Utilidades</label><label class="g chk" title="Mostrar os tiros (rasto das armas)"><input type="checkbox" id="ts"${showS?' checked':''}>Tiros</label>`}<button class="g solid ic" id="fs" title="Ecrã inteiro">${IC.full}</button></div>
    </div>
@@ -284,6 +287,50 @@ function demoPlay(D,el,p){
   const popOut=e=>{if(!document.body.contains(stg)){document.removeEventListener('pointerdown',popOut);return}if(e.target.closest('.pop,#nt,#nvw'))return;if(!(ndAuto&&isAct()))$$('nd').classList.remove('open');$$('nlp').classList.remove('open')};document.addEventListener('pointerdown',popOut);
   $$('nt').onclick=()=>{ndAuto=false;bh();shUi();$$('nlp').classList.remove('open');$$('nd').classList.toggle('open')};
   $$('nvw').onclick=()=>{bh();$$('nd').classList.remove('open');$$('nlp').classList.toggle('open')};
+ // ---- Revisão: guardar/abrir ficheiro .ugr.json (coach envia ao aluno) ----
+ const flash=(b,t)=>{const o=b.innerHTML;b.textContent=t;setTimeout(()=>{b.innerHTML=o},2200)};
+ const hasAnno=a=>(a.shapes||[]).length||(a.notes||[]).length||Object.keys(a.mocks||{}).length,hasOwn=a=>(a.shapes||[]).length||(a.notes||[]).length;
+ const mergeAnno=(a,b)=>{const sid=new Set((a.shapes||[]).map(x=>String(x.id))),nid=new Set((a.notes||[]).map(x=>String(x.id)));
+  return{shapes:[...(a.shapes||[]),...(b.shapes||[]).filter(x=>!sid.has(String(x.id)))],notes:[...(a.notes||[]),...(b.notes||[]).filter(x=>!nid.has(String(x.id)))],mocks:{...(a.mocks||{}),...(b.mocks||{})},pos:{...(a.pos||{}),...(b.pos||{})}}};
+ $$('rvs').onclick=()=>{
+  const a=JSON.parse(JSON.stringify(anno));
+  if(mqPrev){const q=mqPrev;if(q.mock)a.mocks[q.key]=JSON.parse(JSON.stringify(q.mock));else delete a.mocks[q.key]}
+  if(!hasAnno(a)&&!confirm('Ainda não tens desenhos, notas nem maquetes. Guardar mesmo assim um ficheiro vazio?'))return;
+  const d={ugr:1,kind:D.board?'board':'demo',game:'cs2',project:p.name,map:D.map,demoFile:p.fileName||null,demoSize:p.blob?p.blob.size:null,ticks:D.board?null:{n:N,first:t0,last:t1,rounds:rounds.length},saved:new Date().toISOString(),anno:a};
+  const slug=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();
+  const nm=[slug(p.name)||'revisao',slug(String(D.map).replace('de_','')),new Date().toISOString().slice(0,10)].filter(Boolean).join('_')+'.ugr.json';
+  const u=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'})),l=document.createElement('a');
+  l.href=u;l.download=nm;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+  flash($$('rvs'),'✓ Guardado');
+ };
+ $$('rvo').onclick=()=>$$('rvf').click();
+ $$('rvf').onchange=async e=>{
+  const fl=e.target.files[0];e.target.value='';if(!fl)return;
+  let d;try{d=JSON.parse(await fl.text())}catch(x){return alert('Este ficheiro não é válido.')}
+  if(!d||d.ugr!==1||!d.anno||typeof d.anno!=='object')return alert('Este ficheiro não é uma revisão do Universal Game Review.');
+  const isB=d.kind==='board';
+  if(isB&&!D.board)return alert('Este ficheiro é de um quadro tático (só o mapa'+(d.map?': '+String(d.map).replace('de_',''):'')+'). Abre um projeto com "Usar só o mapa" para o importar.');
+  if(!isB&&D.board)return alert('Este ficheiro é de uma demo'+(d.demoFile?' ('+d.demoFile+')':'')+'. Abre o projeto com essa demo para o importar.');
+  const inc=d.anno;
+  if(isB){
+   const mk=d.map&&RADAR[d.map]?d.map:D.map,key=p.id+':anno:'+mk;
+   if(mk!==D.map&&!confirm('Esta revisão é do mapa '+String(mk).replace('de_','')+'. Mudar para esse mapa e importar?'))return;
+   let cur={shapes:[],notes:[],mocks:{},pos:{}};
+   if(mk===D.map)cur=anno;else{try{const r=await tx('readonly',s=>s.get(key));if(r&&r.anno)cur=r.anno}catch(x){}}
+   if(hasOwn(cur)&&!confirm('Já tens anotações neste mapa. OK = juntar as do ficheiro às tuas. Cancelar = não importar.'))return;
+   const m=mergeAnno(cur,inc);
+   if(mk===D.map){anno=m;save();refresh();mqUi();flash($$('rvo'),'✓ Importado');return}
+   try{await put({id:key,anno:m});p.boardMap=mk;await put(p)}catch(x){return alert('Não foi possível guardar a revisão.')}
+   return demoBoard(p,el);
+  }
+  const tk=d.ticks;
+  if((d.map&&d.map!==D.map)||(tk&&(tk.n!==N||tk.first!==t0||tk.last!==t1))){
+   if(!confirm('Esta revisão parece ser de outra demo'+(d.demoFile?' ('+d.demoFile+')':'')+'. Os momentos das notas podem não coincidir. Importar mesmo assim?'))return;
+  }
+  if(hasOwn(anno)&&!confirm('Já tens anotações neste projeto. OK = juntar as do ficheiro às tuas (nas maquetes da mesma ronda, ficam as do ficheiro). Cancelar = não importar.'))return;
+  anno=mergeAnno(anno,inc);save();refresh();mqUi();
+  flash($$('rvo'),'✓ Importado: '+(inc.notes||[]).length+' notas');
+ };
  try{tx('readonly',s=>s.get(AK)).then(r=>{if(r&&r.anno){anno=r.anno;anno.shapes=anno.shapes||[];anno.notes=anno.notes||[];anno.mocks=anno.mocks||{};anno.pos=anno.pos||{};refresh();mqUi()}}).catch(()=>{})}catch(e){}
 
   // ---- maquete: jogadores arrastáveis + quem mata quem (guardada em anno.mocks, por ronda; no quadro, por mapa) ----
